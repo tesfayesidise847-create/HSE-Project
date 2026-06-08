@@ -31,11 +31,13 @@ class MaterialQuantityController extends Controller
             'quantity_to_add' => ['required', 'integer', 'min:1'],
         ]);
 
-        $material->addQuantity((int) $data['quantity_to_add']);
+        $quantityToAdd = (int) $data['quantity_to_add'];
+        $material->addQuantity($quantityToAdd);
+        $material->recordHistory('stock_added', $quantityToAdd, 'Head office quantity added.', $request->user()->id);
 
         app(WorkflowNotificationService::class)->materialQuantityUpdated(
             $material->fresh(),
-            (int) $data['quantity_to_add'],
+            $quantityToAdd,
             $request->user(),
         );
 

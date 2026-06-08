@@ -5,6 +5,15 @@
 
     <div class="py-12">
         <div class="max-w-3xl mx-auto sm:px-6 lg:px-8">
+            <div class="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                    <p class="text-sm text-gray-500 dark:text-gray-400">{{ __('If you have many materials, download the template and import them in bulk.') }}</p>
+                </div>
+                <a href="{{ route('materials.import') }}" class="inline-flex items-center rounded-md bg-slate-900 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-slate-700">
+                    {{ __('Import Materials') }}
+                </a>
+            </div>
+
             <div class="overflow-hidden shadow-sm sm:rounded-lg bg-white dark:bg-gray-800">
                 <div class="p-6 text-gray-900 dark:text-gray-100">
                     <form method="POST" action="{{ route('materials.store') }}">

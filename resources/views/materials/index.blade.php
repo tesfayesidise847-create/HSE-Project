@@ -3,7 +3,10 @@
         <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">{{ __('Materials') }}</h2>
             @role('HSE Officer')
-                <a href="{{ route('materials.create') }}" class="inline-flex items-center rounded-md bg-slate-900 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-offset-2">{{ __('Create Material') }}</a>
+                <div class="flex flex-wrap gap-2">
+                    <a href="{{ route('materials.import') }}" class="inline-flex items-center rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">{{ __('Import Materials') }}</a>
+                    <a href="{{ route('materials.create') }}" class="inline-flex items-center rounded-md bg-slate-900 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-offset-2">{{ __('Create Material') }}</a>
+                </div>
             @endrole
         </div>
     </x-slot>
@@ -24,6 +27,7 @@
                                 <tr>
                                     <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-300">{{ __('Material Name') }}</th>
                                     <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-300">{{ __('Material Description') }}</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-300">{{ __('Unit') }}</th>
                                     <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-300">{{ __('Head Office Qty') }}</th>
                                     <th class="px-6 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-300">{{ __('Actions') }}</th>
                                 </tr>
@@ -33,6 +37,7 @@
                                     <tr>
                                         <td class="whitespace-nowrap px-6 py-4 text-sm text-gray-900 dark:text-gray-100">{{ $material->material_name }}</td>
                                         <td class="px-6 py-4 text-sm text-gray-500 dark:text-gray-300">{{ $material->material_description }}</td>
+                                        <td class="whitespace-nowrap px-6 py-4 text-sm text-gray-500 dark:text-gray-300">{{ $material->unitOfMeasure?->name ?? '-' }}</td>
                                         <td class="whitespace-nowrap px-6 py-4 text-sm text-gray-500 dark:text-gray-300">{{ $material->quantity }}</td>
                                         <td class="whitespace-nowrap px-6 py-4 text-right text-sm font-medium space-x-2">
                                             @role('HSE Officer')
@@ -47,7 +52,7 @@
                                     </tr>
                                 @empty
                                     <tr>
-                                        <td colspan="4" class="px-6 py-10 text-center text-sm text-gray-500 dark:text-gray-400">{{ __('No materials found.') }}</td>
+                                        <td colspan="5" class="px-6 py-10 text-center text-sm text-gray-500 dark:text-gray-400">{{ __('No materials found.') }}</td>
                                     </tr>
                                 @endforelse
                             </tbody>

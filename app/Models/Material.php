@@ -2,7 +2,10 @@
 
 namespace App\Models;
 
+use App\Models\MaterialHistory;
+use App\Models\UnitOfMeasure;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Material extends Model
@@ -14,6 +17,7 @@ class Material extends Model
         'material_name',
         'material_description',
         'quantity',
+        'unit_of_measure_id',
     ];
 
     /**
@@ -31,9 +35,24 @@ class Material extends Model
         return $this->hasMany(MaterialProjectAssignment::class);
     }
 
+    public function histories(): HasMany
+    {
+        return $this->hasMany(MaterialHistory::class)->latest();
+    }
+
+    public function unitOfMeasure(): BelongsTo
+    {
+        return $this->belongsTo(UnitOfMeasure::class);
+    }
+
     public function hasAvailableQuantity(int $amount): bool
     {
         return $this->quantity >= $amount;
+    }
+
+    public function recordHistory(string $eventType, int $quantityChange, string $description, ?int $createdBy = null)
+    {
+        return MaterialHistory::record($this, $eventType, $quantityChange, $description, $createdBy);
     }
 
     public function deductQuantity(int $amount): void

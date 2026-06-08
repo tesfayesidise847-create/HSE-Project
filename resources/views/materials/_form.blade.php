@@ -11,6 +11,18 @@
         <x-input-error :messages="$errors->get('material_description')" class="mt-2" />
     </div>
 
+    <div>
+        <x-input-label for="unit_of_measure_id" :value="__('Unit of Measure')" />
+        <select id="unit_of_measure_id" name="unit_of_measure_id" class="mt-1 block w-full rounded-md border-gray-300 bg-white shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300" required>
+            <option value="">{{ __('Select a unit') }}</option>
+            @foreach($unitOfMeasures as $unitOfMeasure)
+                <option value="{{ $unitOfMeasure->id }}" @selected(old('unit_of_measure_id', $material->unit_of_measure_id) == $unitOfMeasure->id)>{{ $unitOfMeasure->name }}</option>
+            @endforeach
+        </select>
+        <x-input-error :messages="$errors->get('unit_of_measure_id')" class="mt-2" />
+        <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">{{ __('Choose the unit used to track this material quantity.') }}</p>
+    </div>
+
     @if (! $material->exists)
         <div>
             <x-input-label for="quantity" :value="__('Head Office Quantity')" />

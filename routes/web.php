@@ -4,6 +4,7 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\EmployeeController;
 use App\Http\Controllers\MaterialAssignmentController;
 use App\Http\Controllers\MaterialController;
+use App\Http\Controllers\MaterialHistoryController;
 use App\Http\Controllers\MaterialQuantityController;
 use App\Http\Controllers\MaterialReportController;
 use App\Http\Controllers\NotificationController;
@@ -36,6 +37,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('materials', [MaterialController::class, 'index'])->name('materials.index');
 
     Route::middleware('role:HSE Officer')->group(function () {
+        Route::get('materials/import', [MaterialController::class, 'importForm'])->name('materials.import');
+        Route::get('materials/import/template', [MaterialController::class, 'downloadTemplate'])->name('materials.import.template');
+        Route::post('materials/import', [MaterialController::class, 'importStore'])->name('materials.import.store');
         Route::get('materials/create', [MaterialController::class, 'create'])->name('materials.create');
         Route::post('materials', [MaterialController::class, 'store'])->name('materials.store');
         Route::get('materials/{material}/edit', [MaterialController::class, 'edit'])->name('materials.edit');
@@ -52,6 +56,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('material-reports/inventory', [MaterialReportController::class, 'inventory'])->name('material-reports.inventory');
         Route::get('material-reports', [MaterialReportController::class, 'index'])->name('material-reports.index');
         Route::get('material-reports/{project}', [MaterialReportController::class, 'show'])->name('material-reports.show');
+
+        Route::get('material-histories', [MaterialHistoryController::class, 'index'])->name('material-histories.index');
+        Route::get('material-histories/export', [MaterialHistoryController::class, 'export'])->name('material-histories.export');
     });
 
     Route::middleware('role:HSE Site Officer')->prefix('site-officer')->name('site-officer.')->group(function () {

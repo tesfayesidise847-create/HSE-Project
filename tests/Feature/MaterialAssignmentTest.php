@@ -3,12 +3,15 @@
 use App\Models\Material;
 use App\Models\MaterialProjectAssignment;
 use App\Models\Project;
+use App\Models\UnitOfMeasure;
 use App\Models\User;
 use Database\Seeders\RoleSeeder;
+use Database\Seeders\UnitOfMeasureSeeder;
 use Spatie\Permission\Models\Role;
 
 beforeEach(function () {
     $this->seed(RoleSeeder::class);
+    $this->seed(UnitOfMeasureSeeder::class);
 });
 
 function createHseOfficer(): User
@@ -115,6 +118,7 @@ it('requires material quantity when hse officer creates a material', function ()
         'material_name' => 'Boots',
         'material_description' => 'Safety boots',
         'quantity' => 25,
+        'unit_of_measure_id' => UnitOfMeasure::first()->id,
     ])->assertRedirect(route('materials.index'));
 
     expect(Material::first()->quantity)->toBe(25);

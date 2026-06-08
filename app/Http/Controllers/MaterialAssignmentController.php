@@ -91,6 +91,7 @@ class MaterialAssignmentController extends Controller
                 ]);
 
                 $material->deductQuantity($quantity);
+                $material->recordHistory('assigned_to_project', -$quantity, "Assigned to project {$project->project_code}.", $request->user()->id);
             }
         });
 

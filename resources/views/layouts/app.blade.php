@@ -106,6 +106,7 @@
                             @endhasanyrole
 
                             @role('HSE Officer')
+                                {!! $sidebarLink(route('material-histories.index'), __('Material History'), request()->routeIs('material-histories.*'), $icons['report']) !!}
                                 {!! $sidebarLink(route('material-assignments.create'), __('Assign Materials'), request()->routeIs('material-assignments.*'), $icons['assign']) !!}
                                 {!! $sidebarLink(route('material-quantities.index'), __('Material Quantities'), request()->routeIs('material-quantities.*'), $icons['quantity']) !!}
                                 {!! $sidebarLink(route('material-reports.inventory'), __('Material Inventory Report'), request()->routeIs('material-reports.inventory'), $icons['report']) !!}
