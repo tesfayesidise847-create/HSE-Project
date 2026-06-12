@@ -19,6 +19,7 @@ class UnitOfMeasureSeeder extends Seeder
             ['name' => 'Meter', 'created_at' => now(), 'updated_at' => now()],
             ['name' => 'Liter', 'created_at' => now(), 'updated_at' => now()],
             ['name' => 'Bag', 'created_at' => now(), 'updated_at' => now()],
+            ['name' => 'Roll', 'created_at' => now(), 'updated_at' => now()],
         ]);
     }
 }
