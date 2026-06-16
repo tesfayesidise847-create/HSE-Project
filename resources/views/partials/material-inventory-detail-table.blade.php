@@ -20,13 +20,14 @@
                     <tr>
                         <th class="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500 dark:text-gray-300">{{ __('Material') }}</th>
                         <th class="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500 dark:text-gray-300">{{ __('Description') }}</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500 dark:text-gray-300">{{ __('Unit of Measure') }}</th>
                         @if ($isHeadOffice)
-                            <th class="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500 dark:text-gray-300">{{ __('Total Stocked') }}</th>
-                            <th class="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500 dark:text-gray-300">{{ __('Head Office Available') }}</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500 dark:text-gray-300">{{ __('Opening Stock') }}</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500 dark:text-gray-300">{{ __('Physical Balance') }}</th>
                         @else
                             <th class="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500 dark:text-gray-300">{{ __('Received') }}</th>
                         @endif
-                        <th class="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500 dark:text-gray-300">{{ __('Assigned to Employees') }}</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500 dark:text-gray-300">{{ __('Assigned to Sites') }}</th>
                         <th class="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500 dark:text-gray-300">{{ __('Available Balance') }}</th>
                         @if ($isHeadOffice)
                             <th class="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500 dark:text-gray-300">{{ __('Total in System') }}</th>
@@ -38,13 +39,14 @@
                         <tr>
                             <td class="whitespace-nowrap px-4 py-3 text-sm font-medium text-gray-900 dark:text-gray-100">{{ $material['name'] }}</td>
                             <td class="max-w-xs px-4 py-3 text-sm text-gray-500 dark:text-gray-300">{{ $material['description'] }}</td>
+                            <td class="whitespace-nowrap px-4 py-3 text-sm text-gray-500 dark:text-gray-300">{{ $material['unit_of_measure'] ?? '—' }}</td>
                             @if ($isHeadOffice)
-                                <td class="whitespace-nowrap px-4 py-3 text-sm text-gray-500 dark:text-gray-300">{{ number_format($material['total_stocked_quantity']) }}</td>
-                                <td class="whitespace-nowrap px-4 py-3 text-sm text-gray-500 dark:text-gray-300">{{ number_format($material['head_office_available'] ?? 0) }}</td>
+                                <td class="whitespace-nowrap px-4 py-3 text-sm text-gray-500 dark:text-gray-300">{{ number_format($material['opening_stock']) }}</td>
+                                <td class="whitespace-nowrap px-4 py-3 text-sm text-gray-500 dark:text-gray-300">{{ number_format($material['physical_balance'] ?? 0) }}</td>
                             @else
                                 <td class="whitespace-nowrap px-4 py-3 text-sm text-gray-500 dark:text-gray-300">{{ number_format($material['assigned_to_projects']) }}</td>
                             @endif
-                            <td class="whitespace-nowrap px-4 py-3 text-sm text-gray-500 dark:text-gray-300">{{ number_format($material['assigned_to_employees']) }}</td>
+                            <td class="whitespace-nowrap px-4 py-3 text-sm text-gray-500 dark:text-gray-300">{{ number_format($material['assigned_to_sites']) }}</td>
                             <td class="whitespace-nowrap px-4 py-3 text-sm font-medium text-emerald-600 dark:text-emerald-400">{{ number_format($material['site_remaining']) }}</td>
                             @if ($isHeadOffice)
                                 <td class="whitespace-nowrap px-4 py-3 text-sm font-semibold text-indigo-600 dark:text-indigo-400">{{ number_format($material['total_in_system']) }}</td>

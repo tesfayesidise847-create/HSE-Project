@@ -36,6 +36,30 @@
                 );
             };
 
+            $sidebarParent = function (string $label, string $iconPath, string $openVar): string {
+                return sprintf(
+                    '<button type="button" @click="%s = !%s" class="flex w-full items-center justify-between gap-3 rounded-md px-4 py-3 text-sm font-medium text-cyan-950 hover:bg-cyan-100 hover:text-cyan-950 dark:text-cyan-100 dark:hover:bg-cyan-900 dark:hover:text-white transition-colors"><div class="flex items-center gap-3"><svg class="h-5 w-5 shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor">%s</svg><span x-show="! sidebarCollapsed" x-cloak>%s</span></div><svg x-show="! sidebarCollapsed" x-cloak class="h-4 w-4 shrink-0 transition-transform duration-200" :class="%s ? \'rotate-180\' : \'\'" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" /></svg></button>',
+                    $openVar,
+                    $openVar,
+                    $iconPath,
+                    e($label),
+                    $openVar
+                );
+            };
+
+            $sidebarSubLink = function (string $href, string $label, bool $active): string {
+                $classes = $active
+                    ? 'bg-cyan-500/15 text-cyan-700 dark:text-cyan-300 font-semibold shadow-inner'
+                    : 'text-cyan-900 hover:bg-cyan-100/50 hover:text-cyan-950 dark:text-cyan-200 dark:hover:bg-cyan-900/50 dark:hover:text-white';
+
+                return sprintf(
+                    '<a href="%s" class="flex items-center gap-3 rounded-md py-2 text-xs font-medium transition-all %s" :class="sidebarCollapsed ? \'pl-4\' : \'pl-12\'">%s</a>',
+                    e($href),
+                    $classes,
+                    e($label)
+                );
+            };
+
             $icons = [
                 'dashboard' => '<path stroke-linecap="round" stroke-linejoin="round" d="M3.75 12 12 4.5 20.25 12M5.25 10.5V19.5h4.5v-5.25h4.5V19.5h4.5V10.5" />',
                 'users' => '<path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6.75a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.5 20.25a7.5 7.5 0 0 1 15 0M18 8.25a2.625 2.625 0 0 1 0 5.25M21 20.25a5.25 5.25 0 0 0-3.75-5.03" />',
@@ -59,6 +83,11 @@
                         this.sidebarCollapsed = ! this.sidebarCollapsed;
                         localStorage.setItem('sidebar-collapsed', this.sidebarCollapsed ? 'true' : 'false');
                     },
+                    openMaterials: {{ request()->routeIs('materials.*', 'material-histories.*') ? 'true' : 'false' }},
+                    openProjects: {{ (request()->routeIs('projects.*') || request()->routeIs('site-officer.projects.*')) ? 'true' : 'false' }},
+                    openAssign: {{ (request()->routeIs('material-assignments.*') || request()->routeIs('site-officer.employee-assignments.create')) ? 'true' : 'false' }},
+                    openReport: {{ (request()->routeIs('material-reports.*', 'site-officer.material-reports.*', 'site-officer.employee-assignments.index')) ? 'true' : 'false' }},
+                    openUserManagement: {{ (request()->routeIs('users.*') || request()->routeIs('roles.*') || request()->routeIs('employees.*')) ? 'true' : 'false' }}
                 }"
                 class="flex flex-col lg:flex-row"
             >
@@ -84,34 +113,85 @@
                         <nav class="space-y-1">
                             {!! $sidebarLink(route('dashboard'), __('Dashboard'), request()->routeIs('dashboard'), $icons['dashboard']) !!}
 
-                            @role('Admin')
-                                {!! $sidebarLink(route('users.index'), __('Users'), request()->routeIs('users.*'), $icons['users']) !!}
-                                {!! $sidebarLink(route('roles.index'), __('Roles'), request()->routeIs('roles.*'), $icons['roles']) !!}
-                            @endrole
-
-                            @role('HSE Site Officer')
-                                {!! $sidebarLink(route('site-officer.projects.index'), __('My Projects'), request()->routeIs('site-officer.projects.*'), $icons['projects']) !!}
-                                {!! $sidebarLink(route('site-officer.employee-assignments.create'), __('Assign to Employees'), request()->routeIs('site-officer.employee-assignments.create'), $icons['assign']) !!}
-                                {!! $sidebarLink(route('site-officer.employee-assignments.index'), __('Employee Assignments'), request()->routeIs('site-officer.employee-assignments.index'), $icons['employees']) !!}
-                                {!! $sidebarLink(route('site-officer.material-reports.index'), __('Material Balance Report'), request()->routeIs('site-officer.material-reports.*'), $icons['report']) !!}
-                            @endrole
-
+                            {{-- Materials --}}
                             @hasanyrole('Admin|HSE Officer')
-                                @role('Admin')
-                                    {!! $sidebarLink(route('employees.index'), __('Employees'), request()->routeIs('employees.*'), $icons['employees']) !!}
-                                    {!! $sidebarLink(route('projects.index'), __('Projects'), request()->routeIs('projects.*'), $icons['projects']) !!}
-                                @endrole
-
-                                {!! $sidebarLink(route('materials.index'), __('Materials'), request()->routeIs('materials.*'), $icons['materials']) !!}
+                                <div class="space-y-1">
+                                    {!! $sidebarParent(__('Materials'), $icons['materials'], 'openMaterials') !!}
+                                    <div x-show="openMaterials" x-transition class="space-y-1">
+                                        @hasanyrole('Admin|HSE Officer')
+                                            {!! $sidebarSubLink(route('materials.index'), __('Manage Material'), request()->routeIs('materials.*')) !!}
+                                        @endhasanyrole
+                                        @role('HSE Officer')
+                                            {!! $sidebarSubLink(route('material-histories.index'), __('Material History'), request()->routeIs('material-histories.*')) !!}
+                                        @endrole
+                                    </div>
+                                </div>
                             @endhasanyrole
 
-                            @role('HSE Officer')
-                                {!! $sidebarLink(route('material-histories.index'), __('Material History'), request()->routeIs('material-histories.*'), $icons['report']) !!}
-                                {!! $sidebarLink(route('material-assignments.create'), __('Assign Materials'), request()->routeIs('material-assignments.*'), $icons['assign']) !!}
-                                {!! $sidebarLink(route('material-quantities.index'), __('Material Quantities'), request()->routeIs('material-quantities.*'), $icons['quantity']) !!}
-                                {!! $sidebarLink(route('material-reports.inventory'), __('Material Inventory Report'), request()->routeIs('material-reports.inventory'), $icons['report']) !!}
-                                {!! $sidebarLink(route('material-reports.index'), __('Project Reports'), request()->routeIs('material-reports.index', 'material-reports.show'), $icons['report']) !!}
-                            @endrole
+                            {{-- Projects --}}
+                            @hasanyrole('Admin|HSE Officer|HSE Site Officer')
+                                <div class="space-y-1">
+                                    {!! $sidebarParent(__('Projects'), $icons['projects'], 'openProjects') !!}
+                                    <div x-show="openProjects" x-transition class="space-y-1">
+                                        @hasanyrole('HSE Site Officer|HSE Officer')
+                                            {!! $sidebarSubLink(route('site-officer.projects.index'), __('My Project'), request()->routeIs('site-officer.projects.*')) !!}
+                                        @endhasanyrole
+                                        @hasanyrole('Admin|HSE Officer')
+                                            {!! $sidebarSubLink(route('projects.index'), __('Projects'), request()->routeIs('projects.*')) !!}
+                                        @endhasanyrole
+                                    </div>
+                                </div>
+                            @endhasanyrole
+
+                            {{-- Assign Material --}}
+                            @hasanyrole('HSE Site Officer|HSE Officer')
+                                <div class="space-y-1">
+                                    {!! $sidebarParent(__('Assign Material'), $icons['assign'], 'openAssign') !!}
+                                    <div x-show="openAssign" x-transition class="space-y-1">
+                                        @hasanyrole('HSE Site Officer|HSE Officer')
+                                            {!! $sidebarSubLink(route('site-officer.employee-assignments.create'), __('Assign to employee'), request()->routeIs('site-officer.employee-assignments.create')) !!}
+                                        @endhasanyrole
+                                        @role('HSE Officer')
+                                            {!! $sidebarSubLink(route('material-assignments.create'), __('Assign to Project'), request()->routeIs('material-assignments.*')) !!}
+                                        @endrole
+                                    </div>
+                                </div>
+                            @endhasanyrole
+
+                            {{-- Report --}}
+                            @hasanyrole('HSE Site Officer|HSE Officer')
+                                <div class="space-y-1">
+                                    {!! $sidebarParent(__('Report'), $icons['report'], 'openReport') !!}
+                                    <div x-show="openReport" x-transition class="space-y-1">
+                                        @hasanyrole('HSE Site Officer|HSE Officer')
+                                            {!! $sidebarSubLink(route('site-officer.material-reports.index'), __('Material Balance Report'), request()->routeIs('site-officer.material-reports.*')) !!}
+                                        @endhasanyrole
+                                        @role('HSE Officer')
+                                            {!! $sidebarSubLink(route('material-reports.inventory'), __('Material Inventory Report'), request()->routeIs('material-reports.inventory')) !!}
+                                            {!! $sidebarSubLink(route('material-reports.index'), __('Project Report'), request()->routeIs('material-reports.index', 'material-reports.show')) !!}
+                                        @endrole
+                                        @hasanyrole('HSE Site Officer|HSE Officer')
+                                            {!! $sidebarSubLink(route('site-officer.employee-assignments.index'), __('Employee Assignment History'), request()->routeIs('site-officer.employee-assignments.index')) !!}
+                                        @endhasanyrole
+                                    </div>
+                                </div>
+                            @endhasanyrole
+
+                            {{-- User Management --}}
+                            @hasanyrole('Admin|HSE Officer')
+                                <div class="space-y-1">
+                                    {!! $sidebarParent(__('User Management'), $icons['users'], 'openUserManagement') !!}
+                                    <div x-show="openUserManagement" x-transition class="space-y-1">
+                                        @hasanyrole('Admin|HSE Officer')
+                                            {!! $sidebarSubLink(route('users.index'), __('Users'), request()->routeIs('users.*')) !!}
+                                        @endhasanyrole
+                                        @role('Admin')
+                                            {!! $sidebarSubLink(route('employees.index'), __('Employees'), request()->routeIs('employees.*')) !!}
+                                            {!! $sidebarSubLink(route('roles.index'), __('Roles'), request()->routeIs('roles.*')) !!}
+                                        @endrole
+                                    </div>
+                                </div>
+                            @endhasanyrole
                         </nav>
                     </div>
                 </aside>

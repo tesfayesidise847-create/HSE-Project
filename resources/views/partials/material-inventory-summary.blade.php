@@ -12,18 +12,18 @@
 
     @if ($isHeadOffice)
         <div class="rounded-xl bg-white p-5 shadow-sm dark:bg-gray-800">
-            <p class="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">{{ __('Total Stocked Quantity') }}</p>
+            <p class="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">{{ __('Opening Stock') }}</p>
             <p class="mt-2 text-3xl font-bold text-indigo-600 dark:text-indigo-400">{{ number_format($summary['total_stocked_quantity']) }}</p>
             <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">{{ __('Head office + sent to projects') }}</p>
         </div>
 
         <div class="rounded-xl bg-white p-5 shadow-sm dark:bg-gray-800">
-            <p class="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">{{ __('Head Office Available') }}</p>
+            <p class="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">{{ __('Physical Balance') }}</p>
             <p class="mt-2 text-3xl font-bold text-slate-900 dark:text-gray-100">{{ number_format($summary['total_head_office_available']) }}</p>
         </div>
 
         <div class="rounded-xl bg-white p-5 shadow-sm dark:bg-gray-800">
-            <p class="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">{{ __('Assigned to Projects') }}</p>
+            <p class="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">{{ __('Assigned to Sites') }}</p>
             <p class="mt-2 text-3xl font-bold text-blue-600 dark:text-blue-400">{{ number_format($summary['total_assigned_to_projects']) }}</p>
         </div>
 

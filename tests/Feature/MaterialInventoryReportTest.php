@@ -43,13 +43,66 @@ it('shows head office material inventory report for hse officer', function () {
         ->get(route('material-reports.inventory'))
         ->assertOk()
         ->assertSee('Head Office Material Inventory Report')
-        ->assertSee('Total Materials Created')
         ->assertSee('Material Detail Report')
         ->assertSee('Helmet')
         ->assertSee('Safety helmet')
         ->assertSee('5')
         ->assertSee('20')
         ->assertSee('25');
+});
+
+it('shows only project-specific materials when filtering by project', function () {
+    $hseOfficer = User::factory()->create();
+    $hseOfficer->assignRole('HSE Officer');
+
+    $siteOfficer = User::factory()->create();
+    $siteOfficer->assignRole('HSE Site Officer');
+
+    $projectA = Project::create([
+        'project_name' => 'Project A',
+        'project_code' => 'PA-001',
+        'site_officer_id' => $siteOfficer->id,
+    ]);
+
+    $projectB = Project::create([
+        'project_name' => 'Project B',
+        'project_code' => 'PB-001',
+        'site_officer_id' => $siteOfficer->id,
+    ]);
+
+    $materialA = Material::create([
+        'material_name' => 'Gloves',
+        'material_description' => 'Safety gloves',
+        'quantity' => 10,
+    ]);
+
+    $materialB = Material::create([
+        'material_name' => 'Boots',
+        'material_description' => 'Work boots',
+        'quantity' => 8,
+    ]);
+
+    MaterialProjectAssignment::create([
+        'material_id' => $materialA->id,
+        'project_id' => $projectA->id,
+        'quantity' => 12,
+        'receiver_id' => $siteOfficer->id,
+        'assigned_by' => $hseOfficer->id,
+    ]);
+
+    MaterialProjectAssignment::create([
+        'material_id' => $materialB->id,
+        'project_id' => $projectB->id,
+        'quantity' => 5,
+        'receiver_id' => $siteOfficer->id,
+        'assigned_by' => $hseOfficer->id,
+    ]);
+
+    $this->actingAs($hseOfficer)
+        ->get(route('material-reports.inventory', ['project_id' => $projectA->id]))
+        ->assertOk()
+        ->assertSee('Gloves')
+        ->assertDontSee('Boots');
 });
 
 it('shows site material balance report scoped to site officer projects', function () {

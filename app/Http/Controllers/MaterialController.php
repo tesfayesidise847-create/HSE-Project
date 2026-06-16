@@ -41,7 +41,6 @@ class MaterialController extends Controller
         ]);
 
         $material = Material::create($data);
-        $material->recordHistory('created', $material->quantity, 'Material created with initial head office balance.', $request->user()->id);
 
         app(WorkflowNotificationService::class)->materialCreated($material, $request->user());
 
@@ -54,6 +53,28 @@ class MaterialController extends Controller
             'material' => $material,
             'unitOfMeasures' => UnitOfMeasure::orderBy('name')->get(),
         ]);
+    }
+
+    public function update(Request $request, Material $material): RedirectResponse
+    {
+        $data = $request->validate([
+            'material_name' => ['required', 'string', 'max:255'],
+            'material_description' => ['required', 'string'],
+            'unit_of_measure_id' => ['required', 'exists:unit_of_measures,id'],
+        ]);
+
+        $material->update($data);
+
+        app(WorkflowNotificationService::class)->materialUpdated($material, $request->user());
+
+        return Redirect::route('materials.index')->with('success', 'Material updated successfully.');
+    }
+
+    public function destroy(Material $material): RedirectResponse
+    {
+        $material->delete();
+
+        return Redirect::route('materials.index')->with('success', 'Material deleted successfully.');
     }
 
     public function importForm(): View
@@ -86,27 +107,5 @@ class MaterialController extends Controller
         }
 
         return Redirect::route('materials.index')->with('success', $message);
-    }
-
-    public function update(Request $request, Material $material): RedirectResponse
-    {
-        $data = $request->validate([
-            'material_name' => ['required', 'string', 'max:255'],
-            'material_description' => ['required', 'string'],
-            'unit_of_measure_id' => ['required', 'exists:unit_of_measures,id'],
-        ]);
-
-        $material->update($data);
-
-        app(WorkflowNotificationService::class)->materialUpdated($material, $request->user());
-
-        return Redirect::route('materials.index')->with('success', 'Material updated successfully.');
-    }
-
-    public function destroy(Material $material): RedirectResponse
-    {
-        $material->delete();
-
-        return Redirect::route('materials.index')->with('success', 'Material deleted successfully.');
     }
 }

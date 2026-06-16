@@ -23,7 +23,9 @@ class SiteOfficerEmployeeAssignmentController extends Controller
     public function create(Request $request): View
     {
         $projects = Project::query()
-            ->where('site_officer_id', $request->user()->id)
+            ->when(! $request->user()->hasAnyRole(['Admin', 'HSE Officer']), function ($query) use ($request) {
+                return $query->where('site_officer_id', $request->user()->id);
+            })
             ->orderBy('project_name')
             ->get();
 
@@ -133,7 +135,9 @@ class SiteOfficerEmployeeAssignmentController extends Controller
     public function index(Request $request): View
     {
         $projectIds = Project::query()
-            ->where('site_officer_id', $request->user()->id)
+            ->when(! $request->user()->hasAnyRole(['Admin', 'HSE Officer']), function ($query) use ($request) {
+                return $query->where('site_officer_id', $request->user()->id);
+            })
             ->pluck('id');
 
         $assignments = MaterialEmployeeAssignment::query()
@@ -152,7 +156,9 @@ class SiteOfficerEmployeeAssignmentController extends Controller
     public function employeeHistory(Request $request, Employee $employee): JsonResponse
     {
         $projectIds = Project::query()
-            ->where('site_officer_id', $request->user()->id)
+            ->when(! $request->user()->hasAnyRole(['Admin', 'HSE Officer']), function ($query) use ($request) {
+                return $query->where('site_officer_id', $request->user()->id);
+            })
             ->pluck('id');
 
         $assignments = MaterialEmployeeAssignment::query()

@@ -14,7 +14,9 @@ class SiteOfficerMaterialReportController extends Controller
     public function index(Request $request): View
     {
         $projects = Project::query()
-            ->where('site_officer_id', $request->user()->id)
+            ->when(! $request->user()->hasAnyRole(['Admin', 'HSE Officer']), function ($query) use ($request) {
+                return $query->where('site_officer_id', $request->user()->id);
+            })
             ->orderBy('project_name')
             ->get();
 

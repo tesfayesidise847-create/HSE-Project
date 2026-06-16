@@ -7,7 +7,6 @@ use App\Models\UnitOfMeasure;
 use App\Models\User;
 use Database\Seeders\RoleSeeder;
 use Database\Seeders\UnitOfMeasureSeeder;
-use Spatie\Permission\Models\Role;
 
 beforeEach(function () {
     $this->seed(RoleSeeder::class);
@@ -111,15 +110,27 @@ it('denies non hse officers from assigning materials', function () {
         ->assertForbidden();
 });
 
+it('shows unit of measure options when hse officer creates a material', function () {
+    $officer = createHseOfficer();
+
+    $this->actingAs($officer)
+        ->get(route('materials.create'))
+        ->assertOk()
+        ->assertSee('Unit of Measure')
+        ->assertSee('Pcs');
+});
+
 it('requires material quantity when hse officer creates a material', function () {
     $officer = createHseOfficer();
+    $unitOfMeasure = UnitOfMeasure::first();
 
     $this->actingAs($officer)->post(route('materials.store'), [
         'material_name' => 'Boots',
         'material_description' => 'Safety boots',
         'quantity' => 25,
-        'unit_of_measure_id' => UnitOfMeasure::first()->id,
+        'unit_of_measure_id' => $unitOfMeasure->id,
     ])->assertRedirect(route('materials.index'));
 
     expect(Material::first()->quantity)->toBe(25);
+    expect(Material::first()->unit_of_measure_id)->toBe($unitOfMeasure->id);
 });

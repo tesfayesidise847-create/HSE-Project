@@ -34,6 +34,6 @@ class Project extends Model
 
     public function isManagedBy(User $user): bool
     {
-        return $this->site_officer_id === $user->id;
+        return $user->hasAnyRole(['Admin', 'HSE Officer']) || $this->site_officer_id === $user->id;
     }
 }

@@ -6,6 +6,9 @@ use App\Models\Material;
 use App\Models\MaterialEmployeeAssignment;
 use App\Models\MaterialProjectAssignment;
 use App\Models\Project;
+use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection;
 
 class MaterialInventoryReportService
@@ -13,10 +16,26 @@ class MaterialInventoryReportService
     /**
      * @return array{summary: array<string, int>, materials: list<array<string, mixed>>}
      */
-    public function forHeadOffice(): array
-    {
-        $projectIds = Project::query()->pluck('id');
-        $materials = $this->buildMaterialRows($projectIds, isHeadOffice: true);
+    public function forHeadOffice(
+        ?string $search = null,
+        ?string $fromDate = null,
+        ?string $toDate = null,
+        ?string $quarter = null,
+        ?int $projectId = null,
+    ): array {
+        $projectIds = Project::query()
+            ->when($projectId, fn ($q) => $q->where('id', $projectId))
+            ->pluck('id');
+
+        $materials = $this->buildMaterialRows(
+            $projectIds,
+            isHeadOffice: true,
+            search: $search,
+            fromDate: $fromDate,
+            toDate: $toDate,
+            quarter: $quarter,
+            restrictToProject: $projectId !== null,
+        );
 
         return [
             'summary' => $this->buildHeadOfficeSummary($materials),
@@ -28,10 +47,22 @@ class MaterialInventoryReportService
      * @param  Collection<int, Project>  $projects
      * @return array{summary: array<string, int>, materials: list<array<string, mixed>>}
      */
-    public function forSiteOfficer(Collection $projects): array
-    {
+    public function forSiteOfficer(
+        Collection $projects,
+        ?string $search = null,
+        ?string $fromDate = null,
+        ?string $toDate = null,
+        ?string $quarter = null,
+    ): array {
         $projectIds = $projects->pluck('id');
-        $materials = $this->buildMaterialRows($projectIds, isHeadOffice: false);
+        $materials = $this->buildMaterialRows(
+            $projectIds,
+            isHeadOffice: false,
+            search: $search,
+            fromDate: $fromDate,
+            toDate: $toDate,
+            quarter: $quarter,
+        );
 
         return [
             'summary' => $this->buildSiteOfficerSummary($materials),
@@ -74,20 +105,67 @@ class MaterialInventoryReportService
      * @param  Collection<int, int>  $projectIds
      * @return list<array<string, mixed>>
      */
-    private function buildMaterialRows(Collection $projectIds, bool $isHeadOffice): array
-    {
+    private function buildMaterialRows(
+        Collection $projectIds,
+        bool $isHeadOffice,
+        ?string $search = null,
+        ?string $fromDate = null,
+        ?string $toDate = null,
+        ?string $quarter = null,
+        bool $restrictToProject = false,
+    ): array {
+        $projectQuery = MaterialProjectAssignment::query();
+        $employeeQuery = MaterialEmployeeAssignment::query();
+
+        // Apply date range filters
+        if ($quarter) {
+            [$quarterStart, $quarterEnd] = $this->getQuarterDateRange($quarter);
+            $projectQuery->whereBetween('created_at', [$quarterStart, $quarterEnd]);
+            $employeeQuery->whereBetween('created_at', [$quarterStart, $quarterEnd]);
+        } else {
+            if ($fromDate) {
+                $projectQuery->whereDate('created_at', '>=', $fromDate);
+                $employeeQuery->whereDate('created_at', '>=', $fromDate);
+            }
+            if ($toDate) {
+                $projectQuery->whereDate('created_at', '<=', $toDate);
+                $employeeQuery->whereDate('created_at', '<=', $toDate);
+            }
+        }
+
         $assignedToProjectsByMaterial = $this->assignmentsByMaterial(
-            MaterialProjectAssignment::query(),
+            $projectQuery,
             $projectIds,
         );
 
         $assignedToEmployeesByMaterial = $this->assignmentsByMaterial(
-            MaterialEmployeeAssignment::query(),
+            $employeeQuery,
             $projectIds,
         );
 
         if ($isHeadOffice) {
-            $materials = Material::query()->orderBy('material_name')->get();
+            if ($restrictToProject) {
+                $materialIds = $assignedToProjectsByMaterial->keys()
+                    ->merge($assignedToEmployeesByMaterial->keys())
+                    ->unique();
+
+                if ($materialIds->isEmpty()) {
+                    return [];
+                }
+
+                $materials = Material::query()
+                    ->with('unitOfMeasure')
+                    ->whereIn('id', $materialIds)
+                    ->when($search, fn ($q) => $q->where('material_name', 'like', "%{$search}%"))
+                    ->orderBy('material_name')
+                    ->get();
+            } else {
+                $materials = Material::query()
+                    ->with('unitOfMeasure')
+                    ->when($search, fn ($q) => $q->where('material_name', 'like', "%{$search}%"))
+                    ->orderBy('material_name')
+                    ->get();
+            }
         } else {
             $materialIds = $assignedToProjectsByMaterial->keys()
                 ->merge($assignedToEmployeesByMaterial->keys())
@@ -98,7 +176,9 @@ class MaterialInventoryReportService
             }
 
             $materials = Material::query()
+                ->with('unitOfMeasure')
                 ->whereIn('id', $materialIds)
+                ->when($search, fn ($q) => $q->where('material_name', 'like', "%{$search}%"))
                 ->orderBy('material_name')
                 ->get();
         }
@@ -119,18 +199,23 @@ class MaterialInventoryReportService
                 'id' => $material->id,
                 'name' => $material->material_name,
                 'description' => $material->material_description,
+                'unit_of_measure' => $material->unitOfMeasure?->name,
                 'head_office_available' => $headOfficeAvailable,
                 'total_stocked_quantity' => $totalStockedQuantity,
                 'assigned_to_projects' => $assignedToProjects,
                 'assigned_to_employees' => $assignedToEmployees,
                 'site_remaining' => $siteRemaining,
                 'total_in_system' => $totalInSystem,
+                // New field names for clarity
+                'opening_stock' => $totalStockedQuantity,
+                'assigned_to_sites' => $assignedToProjects,
+                'physical_balance' => $headOfficeAvailable,
             ];
         })->values()->all();
     }
 
     /**
-     * @param  \Illuminate\Database\Eloquent\Builder<\Illuminate\Database\Eloquent\Model>  $query
+     * @param  Builder<Model>  $query
      * @param  Collection<int, int>  $projectIds
      * @return Collection<int|string, int>
      */
@@ -146,5 +231,22 @@ class MaterialInventoryReportService
             ->groupBy('material_id')
             ->pluck('total', 'material_id')
             ->map(fn ($total): int => (int) $total);
+    }
+
+    /**
+     * @return array<int, Carbon>
+     */
+    private function getQuarterDateRange(string $quarter): array
+    {
+        $year = now()->year;
+        $quarterNum = (int) $quarter;
+
+        return match ($quarterNum) {
+            1 => [Carbon::create($year, 1, 1), Carbon::create($year, 3, 31)->endOfDay()],
+            2 => [Carbon::create($year, 4, 1), Carbon::create($year, 6, 30)->endOfDay()],
+            3 => [Carbon::create($year, 7, 1), Carbon::create($year, 9, 30)->endOfDay()],
+            4 => [Carbon::create($year, 10, 1), Carbon::create($year, 12, 31)->endOfDay()],
+            default => [Carbon::now()->startOfQuarter(), Carbon::now()->endOfQuarter()],
+        };
     }
 }

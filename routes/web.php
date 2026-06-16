@@ -25,12 +25,15 @@ Route::get('/dashboard', DashboardController::class)->middleware(['auth', 'verif
 
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::middleware('role:Admin')->group(function () {
-        Route::resource('users', UserController::class)->except(['show']);
         Route::resource('roles', RoleController::class)->except(['show']);
         Route::get('employees/import', [EmployeeController::class, 'importForm'])->name('employees.import');
         Route::get('employees/import/template', [EmployeeController::class, 'downloadTemplate'])->name('employees.import.template');
         Route::post('employees/import', [EmployeeController::class, 'importStore'])->name('employees.import.store');
         Route::resource('employees', EmployeeController::class)->except(['show']);
+    });
+
+    Route::middleware('role:Admin|HSE Officer')->group(function () {
+        Route::resource('users', UserController::class)->except(['show']);
         Route::resource('projects', ProjectController::class)->except(['show']);
     });
 
@@ -53,6 +56,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('material-quantities/{material}/edit', [MaterialQuantityController::class, 'edit'])->name('material-quantities.edit');
         Route::patch('material-quantities/{material}', [MaterialQuantityController::class, 'update'])->name('material-quantities.update');
 
+        Route::get('material-reports/balance', [MaterialReportController::class, 'balance'])->name('material-reports.balance');
         Route::get('material-reports/inventory', [MaterialReportController::class, 'inventory'])->name('material-reports.inventory');
         Route::get('material-reports', [MaterialReportController::class, 'index'])->name('material-reports.index');
         Route::get('material-reports/{project}', [MaterialReportController::class, 'show'])->name('material-reports.show');
@@ -61,7 +65,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('material-histories/export', [MaterialHistoryController::class, 'export'])->name('material-histories.export');
     });
 
-    Route::middleware('role:HSE Site Officer')->prefix('site-officer')->name('site-officer.')->group(function () {
+    Route::middleware('role:HSE Site Officer|HSE Officer')->prefix('site-officer')->name('site-officer.')->group(function () {
         Route::get('projects', [SiteOfficerProjectController::class, 'index'])->name('projects.index');
         Route::get('projects/{project}', [SiteOfficerProjectController::class, 'show'])->name('projects.show');
 
