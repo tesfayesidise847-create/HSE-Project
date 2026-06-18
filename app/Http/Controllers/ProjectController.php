@@ -2,8 +2,11 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\MaterialEmployeeAssignment;
+use App\Models\MaterialProjectAssignment;
 use App\Models\Project;
 use App\Models\User;
+use App\SiteMaterialBalanceService;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -27,6 +30,36 @@ class ProjectController extends Controller
         return view('projects.index', [
             'projects' => $projects,
             'isAdmin' => $isAdmin,
+        ]);
+    }
+
+    public function show(Project $project): View
+    {
+        // Resolve the same service used for balance calculation
+        $balanceService = app(SiteMaterialBalanceService::class);
+
+        $balances = $balanceService->balancesForProject($project);
+
+        $incomingHistory = MaterialProjectAssignment::query()
+            ->where('project_id', $project->id)
+            ->with(['material', 'assignedBy'])
+            ->latest()
+            ->get();
+
+        $employeeAssignments = MaterialEmployeeAssignment::query()
+            ->where('project_id', $project->id)
+            ->with(['material', 'employee'])
+            ->latest()
+            ->get();
+
+        $attachedEmployees = $project->employees()->orderBy('first_name')->orderBy('last_name')->get();
+
+        return view('projects.show', [
+            'project' => $project,
+            'balances' => $balances,
+            'incomingHistory' => $incomingHistory,
+            'employeeAssignments' => $employeeAssignments,
+            'attachedEmployees' => $attachedEmployees,
         ]);
     }
 

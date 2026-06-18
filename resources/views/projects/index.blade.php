@@ -57,6 +57,13 @@
                                         <td class="whitespace-nowrap px-6 py-4 text-right">
                                             <div class="flex justify-end gap-2">
                                                 @if ($isAdmin)
+                                                    <a href="{{ route('projects.show', $project) }}" class="inline-flex items-center gap-1.5 rounded-lg bg-emerald-100 px-3 py-2 text-xs font-medium text-emerald-700 hover:bg-emerald-200 transition dark:bg-emerald-900/30 dark:text-emerald-300 dark:hover:bg-emerald-900/50">
+                                                        <svg class="h-4 w-4 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                                                            <path d="M10 12a2 2 0 100-4 2 2 0 000 4z"></path>
+                                                            <path fill-rule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clip-rule="evenodd"></path>
+                                                        </svg>
+                                                        {{ __('View') }}
+                                                    </a>
                                                     <a href="{{ route('projects.edit', $project) }}" class="inline-flex items-center gap-1.5 rounded-lg bg-blue-100 px-3 py-2 text-xs font-medium text-blue-700 hover:bg-blue-200 transition dark:bg-blue-900/30 dark:text-blue-300 dark:hover:bg-blue-900/50">
                                                         <svg class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
                                                             <path d="M2.695 14.762c-.192.461-.35 1.08.032 1.463.382.382 1.002.224 1.463.032l.512-.204c.393-.157.86-.358 1.4-.748a.5.5 0 00-.372-.820c-.119 0-.22-.182-.393-.324h-.001a.5.5 0 00-.614.09l-.204.153c-.466.35-.976.556-1.423.7l-.512.204zM14.5 1a2.5 2.5 0 0 0-2.121 4.12l-7.757 7.757a2 2 0 00-.439 2.384l.328.82-.820.328a2 2 0 00-.384.439l-7.757 7.757A2.5 2.5 0 1 0 2.99 19.656l7.757-7.757a2 2 0 00.439-.384l.82-.328-.328-.82a2 2 0 00.384-2.384l7.757-7.757A2.5 2.5 0 0 0 14.5 1zm0 2a.5.5 0 1 1 0 1 .5.5 0 0 1 0-1z" />

@@ -19,16 +19,20 @@
                         @csrf
 
                         <div class="space-y-6">
-                            <div>
-                                <x-input-label for="project_id" :value="__('Site (Project)')" />
-                                <select id="project_id" name="project_id" x-model="projectId" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300" required>
-                                    <option value="">{{ __('Select project') }}</option>
-                                    @foreach ($projects as $project)
-                                        <option value="{{ $project->id }}" @selected(old('project_id', request('project_id')) == $project->id)>{{ $project->project_code }} — {{ $project->project_name }}</option>
-                                    @endforeach
-                                </select>
-                                <x-input-error :messages="$errors->get('project_id')" class="mt-2" />
-                            </div>
+                                <div class="sm:col-span-2">
+                                    <x-input-label for="project_id" :value="__('Site (Project)')" />
+                                    <select id="project_id" name="project_id" x-model="projectId" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300" required>
+                                        <option value="">{{ __('Select project') }}</option>
+                                        @foreach ($projects as $project)
+                                            <option value="{{ $project->id }}" @selected(old('project_id', request('project_id')) == $project->id)>{{ $project->project_code }} — {{ $project->project_name }}</option>
+                                        @endforeach
+                                    </select>
+                                    <x-input-error :messages="$errors->get('project_id')" class="mt-2" />
+                                    <p x-show="projectId && availableEmployees.length === 0" x-cloak class="mt-2 text-sm text-amber-600 dark:text-amber-400">
+                                        ⚠ {{ __('No employees are attached to this project yet.') }}
+                                        <a href="#" @click.prevent="window.location.href = '{{ route('site-officer.projects.index') }}'" class="underline">{{ __('Go to Projects to add employees.') }}</a>
+                                    </p>
+                                </div>
 
                             <div class="space-y-4">
                                 <div class="flex items-center justify-between">
@@ -115,12 +119,11 @@
     <script>
         function employeeAssignmentForm() {
             const balancesByProject = @json($balancesForJs);
-            const employees = @json($employeesForJs);
+            const employeesByProject = @json($employeesByProjectForJs);
 
             return {
                 ...employeeHistoryMixin(),
                 projectId: @json($defaultProjectId),
-                employees,
                 rows: [{
                     id: Date.now(),
                     employee_id: '',
@@ -131,6 +134,9 @@
                 get availableMaterials() {
                     return balancesByProject[this.projectId] || [];
                 },
+                get availableEmployees() {
+                    return employeesByProject[this.projectId] || [];
+                },
                 newRow() {
                     return {
                         id: Date.now() + Math.random(),
@@ -140,13 +146,14 @@
                     };
                 },
                 filteredEmployees(row) {
+                    const employees = this.availableEmployees;
                     const query = row.employeeSearch.toLowerCase().trim();
 
                     if (! query) {
-                        return this.employees.slice(0, 15);
+                        return employees.slice(0, 15);
                     }
 
-                    return this.employees.filter((employee) => employee.search.includes(query)).slice(0, 15);
+                    return employees.filter((employee) => employee.search.includes(query)).slice(0, 15);
                 },
                 onEmployeeSearch(index) {
                     this.rows[index].showEmployeeDropdown = true;

@@ -26,10 +26,9 @@ class SiteOfficerEmployeeAssignmentController extends Controller
             ->when(! $request->user()->hasAnyRole(['Admin', 'HSE Officer']), function ($query) use ($request) {
                 return $query->where('site_officer_id', $request->user()->id);
             })
+            ->with('employees')
             ->orderBy('project_name')
             ->get();
-
-        $employees = Employee::orderBy('first_name')->orderBy('last_name')->get();
 
         $balancesForJs = $projects->mapWithKeys(function (Project $project): array {
             $balances = $this->balanceService->balancesForProject($project)
@@ -44,16 +43,21 @@ class SiteOfficerEmployeeAssignmentController extends Controller
             return [$project->id => $balances];
         })->all();
 
-        $employeesForJs = $employees->map(fn (Employee $employee): array => [
-            'id' => $employee->id,
-            'label' => $employee->first_name.' '.$employee->last_name.' — '.$employee->job_title,
-            'search' => strtolower($employee->first_name.' '.$employee->last_name.' '.$employee->job_title),
-        ])->values()->all();
+        // Build a per-project employees map for the JS employee dropdown
+        $employeesByProjectForJs = $projects->mapWithKeys(function (Project $project): array {
+            $employees = $project->employees->map(fn (Employee $employee): array => [
+                'id' => $employee->id,
+                'label' => $employee->first_name.' '.$employee->last_name.' — '.$employee->job_title,
+                'search' => strtolower($employee->first_name.' '.$employee->last_name.' '.$employee->job_title),
+            ])->values()->all();
+
+            return [$project->id => $employees];
+        })->all();
 
         return view('site-officer.employee-assignments.create', [
             'projects' => $projects,
             'balancesForJs' => $balancesForJs,
-            'employeesForJs' => $employeesForJs,
+            'employeesByProjectForJs' => $employeesByProjectForJs,
             'defaultProjectId' => old('project_id', request('project_id', '')),
             'employeeHistoryUrlTemplate' => route('site-officer.employees.assignment-history', ['employee' => '__EMPLOYEE__']),
         ]);

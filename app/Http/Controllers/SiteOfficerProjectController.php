@@ -50,11 +50,14 @@ class SiteOfficerProjectController extends Controller
             ->latest()
             ->get();
 
+        $attachedEmployees = $project->employees()->orderBy('first_name')->orderBy('last_name')->get();
+
         return view('site-officer.projects.show', [
             'project' => $project,
             'balances' => $balances,
             'incomingHistory' => $incomingHistory,
             'employeeAssignments' => $employeeAssignments,
+            'attachedEmployees' => $attachedEmployees,
         ]);
     }
 

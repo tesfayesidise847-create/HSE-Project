@@ -134,7 +134,8 @@
                                     {!! $sidebarParent(__('Projects'), $icons['projects'], 'openProjects') !!}
                                     <div x-show="openProjects" x-transition class="space-y-1">
                                         @role('HSE Site Officer')
-                                            {!! $sidebarSubLink(route('site-officer.projects.index'), __('My Project'), request()->routeIs('site-officer.projects.*')) !!}
+                                            {!! $sidebarSubLink(route('site-officer.projects.index'), __('My Projects'), request()->routeIs('site-officer.projects.index') || request()->routeIs('site-officer.projects.show')) !!}
+                                            {!! $sidebarSubLink(route('site-officer.projects.index'), __('Manage Employees'), request()->routeIs('site-officer.projects.employees.*')) !!}
                                         @endrole
                                         @hasanyrole('Admin|HSE Officer')
                                             {!! $sidebarSubLink(route('projects.index'), __('Projects'), request()->routeIs('projects.*')) !!}

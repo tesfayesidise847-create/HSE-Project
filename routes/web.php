@@ -14,6 +14,7 @@ use App\Http\Controllers\RoleController;
 use App\Http\Controllers\SiteOfficerEmployeeAssignmentController;
 use App\Http\Controllers\SiteOfficerMaterialReportController;
 use App\Http\Controllers\SiteOfficerProjectController;
+use App\Http\Controllers\SiteOfficerProjectEmployeeController;
 use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
 
@@ -34,7 +35,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::middleware('role:Admin|HSE Officer')->group(function () {
         Route::resource('users', UserController::class)->except(['show']);
-        Route::resource('projects', ProjectController::class)->except(['show']);
+        Route::resource('projects', ProjectController::class);
     });
 
     Route::get('materials', [MaterialController::class, 'index'])->name('materials.index');
@@ -70,6 +71,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::middleware('role:HSE Site Officer|HSE Officer')->prefix('site-officer')->name('site-officer.')->group(function () {
         Route::get('projects', [SiteOfficerProjectController::class, 'index'])->name('projects.index');
         Route::get('projects/{project}', [SiteOfficerProjectController::class, 'show'])->name('projects.show');
+        Route::get('projects/{project}/employees', [SiteOfficerProjectEmployeeController::class, 'index'])->name('projects.employees.index');
+        Route::post('projects/{project}/employees', [SiteOfficerProjectEmployeeController::class, 'sync'])->name('projects.employees.sync');
+        Route::delete('projects/{project}/employees/{employee}', [SiteOfficerProjectEmployeeController::class, 'destroy'])->name('projects.employees.destroy');
 
         Route::get('material-reports', [SiteOfficerMaterialReportController::class, 'index'])->name('material-reports.index');
 
