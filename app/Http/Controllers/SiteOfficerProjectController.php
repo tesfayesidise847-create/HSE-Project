@@ -6,7 +6,6 @@ use App\Models\MaterialEmployeeAssignment;
 use App\Models\MaterialProjectAssignment;
 use App\Models\Project;
 use App\SiteMaterialBalanceService;
-use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 
@@ -14,9 +13,23 @@ class SiteOfficerProjectController extends Controller
 {
     public function __construct(private SiteMaterialBalanceService $balanceService) {}
 
-    public function index(Request $request): RedirectResponse
+    public function index(Request $request): View
     {
-        return redirect()->route('projects.index');
+        $projects = Project::query()
+            ->when(! $request->user()->hasAnyRole(['Admin', 'HSE Officer']), function ($query) use ($request) {
+                return $query->where('site_officer_id', $request->user()->id);
+            })
+            ->orderBy('project_name')
+            ->get();
+
+        $balancesByProject = $projects->mapWithKeys(function (Project $project): array {
+            return [$project->id => $this->balanceService->balancesForProject($project)];
+        });
+
+        return view('site-officer.projects.index', [
+            'projects' => $projects,
+            'balancesByProject' => $balancesByProject,
+        ]);
     }
 
     public function show(Request $request, Project $project): View
