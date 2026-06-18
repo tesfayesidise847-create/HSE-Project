@@ -78,6 +78,7 @@
         </div>
     </div>
 
+    @if (!$stats['is_head_office'])
     <div class="overflow-hidden rounded-xl bg-white shadow-sm dark:bg-gray-800">
         <div class="border-b border-gray-200 px-6 py-4 dark:border-gray-700">
             <h3 class="text-base font-semibold text-gray-900 dark:text-gray-100">{{ __('Material Balance Summary') }}</h3>
@@ -116,6 +117,7 @@
             @endif
         </div>
     </div>
+    @endif
 
     @if ($showProjectLinks && count($stats['project_breakdown']) > 0)
         <div class="overflow-hidden rounded-xl bg-white shadow-sm dark:bg-gray-800">
