@@ -7,6 +7,7 @@ use App\Models\MaterialProjectAssignment;
 use App\Models\Project;
 use App\Models\User;
 use Database\Seeders\RoleSeeder;
+use Illuminate\Pagination\LengthAwarePaginator;
 
 beforeEach(function () {
     $this->seed(RoleSeeder::class);
@@ -155,4 +156,82 @@ it('returns employee assignment history for site officer projects', function () 
         ->assertJsonPath('assignments.0.material', 'Boots')
         ->assertJsonPath('assignments.0.quantity', 4)
         ->assertJsonPath('assignments.0.project_code', 'SC-001');
+});
+
+it('filters and paginates all employee assignments for managed projects', function () {
+    $siteOfficer = User::factory()->create();
+    $siteOfficer->assignRole('HSE Site Officer');
+
+    $otherOfficer = User::factory()->create();
+    $otherOfficer->assignRole('HSE Site Officer');
+
+    $project = Project::create([
+        'project_name' => 'Managed Site',
+        'project_code' => 'MS-001',
+        'site_officer_id' => $siteOfficer->id,
+    ]);
+
+    $otherProject = Project::create([
+        'project_name' => 'Other Site',
+        'project_code' => 'OS-001',
+        'site_officer_id' => $otherOfficer->id,
+    ]);
+
+    $employee = Employee::create([
+        'first_name' => 'Jordan',
+        'last_name' => 'Stone',
+        'gender' => 'Male',
+        'job_title' => 'Worker',
+    ]);
+
+    foreach (range(1, 16) as $index) {
+        $material = Material::create([
+            'material_name' => sprintf('Harness %02d', $index),
+            'material_description' => 'Fall arrest harness',
+            'quantity' => 0,
+        ]);
+
+        MaterialEmployeeAssignment::create([
+            'material_id' => $material->id,
+            'project_id' => $project->id,
+            'employee_id' => $employee->id,
+            'quantity' => 1,
+            'assigned_date' => '2026-05-10',
+            'assigned_by' => $siteOfficer->id,
+        ]);
+    }
+
+    $otherMaterial = Material::create([
+        'material_name' => 'Harness Other',
+        'material_description' => 'Should stay hidden',
+        'quantity' => 0,
+    ]);
+
+    MaterialEmployeeAssignment::create([
+        'material_id' => $otherMaterial->id,
+        'project_id' => $otherProject->id,
+        'employee_id' => $employee->id,
+        'quantity' => 1,
+        'assigned_date' => '2026-05-10',
+        'assigned_by' => $otherOfficer->id,
+    ]);
+
+    $this->actingAs($siteOfficer)
+        ->get(route('site-officer.employee-assignments.index', [
+            'search' => 'Jordan',
+            'project_id' => $project->id,
+            'from_date' => '2026-04-01',
+            'to_date' => '2026-06-30',
+            'quarter' => 2,
+        ]))
+        ->assertOk()
+        ->assertSee('MS-001')
+        ->assertSee('History')
+        ->assertSee('Shoe Number')
+        ->assertDontSee('OS-001')
+        ->assertViewHas('assignments', function ($assignments): bool {
+            return $assignments instanceof LengthAwarePaginator
+                && $assignments->total() === 16
+                && $assignments->count() === 15;
+        });
 });

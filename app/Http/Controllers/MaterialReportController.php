@@ -8,6 +8,7 @@ use App\Models\MaterialEmployeeAssignment;
 use App\Models\MaterialProjectAssignment;
 use App\Models\Project;
 use Illuminate\Http\Request;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
 use Illuminate\View\View;
 
@@ -100,6 +101,174 @@ class MaterialReportController extends Controller
             'materials' => $materials,
             'selectedMaterial' => $selectedMaterial,
             'selectedMaterialBreakdown' => $selectedMaterialBreakdown,
+        ]);
+    }
+
+    public function headOfficeReport(Request $request): View
+    {
+        $query = Material::with('unitOfMeasure')
+            ->orderBy('material_name');
+
+        if ($request->filled('search')) {
+            $search = $request->get('search');
+            $query->where('material_name', 'like', "%{$search}%");
+        }
+
+        $materials = $query->get()
+            ->map(function (Material $material) use ($request) {
+                $assignmentsQuery = MaterialProjectAssignment::query()
+                    ->where('material_id', $material->id);
+
+                if ($request->filled('from_date')) {
+                    $assignmentsQuery->whereDate('created_at', '>=', $request->get('from_date'));
+                }
+                if ($request->filled('to_date')) {
+                    $assignmentsQuery->whereDate('created_at', '<=', $request->get('to_date'));
+                }
+
+                if ($request->filled('quarter')) {
+                    $quarter = (int) $request->get('quarter');
+                    $assignmentsQuery
+                        ->whereMonth('created_at', '>=', (($quarter - 1) * 3) + 1)
+                        ->whereMonth('created_at', '<=', $quarter * 3);
+                }
+
+                if ($request->filled('project_id')) {
+                    $assignmentsQuery->where('project_id', $request->get('project_id'));
+                }
+
+                $totalDistributed = $assignmentsQuery->sum('quantity');
+                $physicalBalance = $material->quantity - $totalDistributed;
+
+                return [
+                    'id' => $material->id,
+                    'material_name' => $material->material_name,
+                    'unit_of_measure' => $material->unitOfMeasure?->name ?? '—',
+                    'opening_stock' => $material->quantity,
+                    'total_distributed' => $totalDistributed,
+                    'physical_available' => max(0, $physicalBalance),
+                ];
+            })
+            ->values();
+
+        $page = $request->get('page', 1);
+        $perPage = 15;
+        $total = $materials->count();
+        $items = $materials->forPage($page, $perPage)->values();
+        $materials = new LengthAwarePaginator(
+            $items,
+            $total,
+            $perPage,
+            $page,
+            [
+                'path' => $request->url(),
+                'query' => $request->except('page'),
+            ]
+        );
+
+        $projects = Project::orderBy('project_name')->get();
+
+        return view('material-reports.head-office', [
+            'materials' => $materials,
+            'projects' => $projects,
+        ]);
+    }
+
+    public function siteReport(Request $request): View
+    {
+        $projects = Project::with('siteOfficer')
+            ->orderBy('project_name')
+            ->get();
+
+        if ($request->filled('project_id')) {
+            $projects = $projects->where('id', $request->get('project_id'));
+        }
+
+        $reportData = [];
+
+        foreach ($projects as $project) {
+            $projectAssignmentsQuery = MaterialProjectAssignment::query()
+                ->where('project_id', $project->id)
+                ->with('material.unitOfMeasure');
+
+            if ($request->filled('from_date')) {
+                $projectAssignmentsQuery->whereDate('created_at', '>=', $request->get('from_date'));
+            }
+            if ($request->filled('to_date')) {
+                $projectAssignmentsQuery->whereDate('created_at', '<=', $request->get('to_date'));
+            }
+
+            if ($request->filled('quarter')) {
+                $quarter = (int) $request->get('quarter');
+                $projectAssignmentsQuery
+                    ->whereMonth('created_at', '>=', (($quarter - 1) * 3) + 1)
+                    ->whereMonth('created_at', '<=', $quarter * 3);
+            }
+
+            $projectAssignments = $projectAssignmentsQuery->get();
+
+            foreach ($projectAssignments as $assignment) {
+                if ($request->filled('search')) {
+                    $search = strtolower($request->get('search'));
+                    $materialName = strtolower($assignment->material->material_name);
+                    if (strpos($materialName, $search) === false) {
+                        continue;
+                    }
+                }
+
+                $employeeDistributedQuery = MaterialEmployeeAssignment::query()
+                    ->where('project_id', $project->id)
+                    ->where('material_id', $assignment->material_id);
+
+                if ($request->filled('from_date')) {
+                    $employeeDistributedQuery->whereDate('assigned_date', '>=', $request->get('from_date'));
+                }
+                if ($request->filled('to_date')) {
+                    $employeeDistributedQuery->whereDate('assigned_date', '<=', $request->get('to_date'));
+                }
+
+                if ($request->filled('quarter')) {
+                    $quarter = (int) $request->get('quarter');
+                    $employeeDistributedQuery
+                        ->whereMonth('assigned_date', '>=', (($quarter - 1) * 3) + 1)
+                        ->whereMonth('assigned_date', '<=', $quarter * 3);
+                }
+
+                $employeeDistributed = $employeeDistributedQuery->sum('quantity');
+                $physicalBalance = $assignment->quantity - $employeeDistributed;
+
+                $reportData[] = [
+                    'material_name' => $assignment->material->material_name,
+                    'unit_of_measure' => $assignment->material->unitOfMeasure?->name ?? '—',
+                    'project_name' => $project->project_name,
+                    'project_code' => $project->project_code,
+                    'assigned_count' => $assignment->quantity,
+                    'distributed_to_employee' => $employeeDistributed,
+                    'physical_available' => max(0, $physicalBalance),
+                ];
+            }
+        }
+
+        $page = $request->get('page', 1);
+        $perPage = 15;
+        $total = count($reportData);
+        $items = array_slice($reportData, ($page - 1) * $perPage, $perPage);
+        $materials = new LengthAwarePaginator(
+            $items,
+            $total,
+            $perPage,
+            $page,
+            [
+                'path' => $request->url(),
+                'query' => $request->except('page'),
+            ]
+        );
+
+        $projects = Project::orderBy('project_name')->get();
+
+        return view('material-reports.site-materials', [
+            'materials' => $materials,
+            'projects' => $projects,
         ]);
     }
 

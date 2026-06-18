@@ -57,6 +57,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::patch('material-quantities/{material}', [MaterialQuantityController::class, 'update'])->name('material-quantities.update');
 
         Route::get('material-reports/balance', [MaterialReportController::class, 'balance'])->name('material-reports.balance');
+        Route::get('material-reports/head-office', [MaterialReportController::class, 'headOfficeReport'])->name('material-reports.head-office');
+        Route::get('material-reports/site', [MaterialReportController::class, 'siteReport'])->name('material-reports.site');
         Route::get('material-reports/inventory', [MaterialReportController::class, 'inventory'])->name('material-reports.inventory');
         Route::get('material-reports', [MaterialReportController::class, 'index'])->name('material-reports.index');
         Route::get('material-reports/{project}', [MaterialReportController::class, 'show'])->name('material-reports.show');

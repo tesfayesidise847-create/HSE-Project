@@ -1,18 +1,20 @@
 <x-app-layout>
     <x-slot name="header">
         <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-            <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">{{ __('Employee Assignment History') }}</h2>
-            <a href="{{ route('site-officer.employee-assignments.create') }}" class="inline-flex items-center rounded-md bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-700">{{ __('New assignment') }}</a>
+            <div>
+                <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">{{ __('Head Office Material Report') }}</h2>
+                <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">{{ __('Overall inventory and distribution across all materials') }}</p>
+            </div>
         </div>
     </x-slot>
 
-    <div class="py-12 space-y-8">
+    <div class="py-12">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
             {{-- Filters Section --}}
             <div class="overflow-hidden shadow-sm sm:rounded-lg bg-white dark:bg-gray-800 mb-6">
                 <div class="p-6">
                     <h3 class="mb-4 text-sm font-semibold uppercase tracking-wider text-gray-600 dark:text-gray-300">{{ __('Filters') }}</h3>
-                    <form method="GET" action="{{ route('site-officer.employee-assignments.index') }}" class="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+                    <form method="GET" action="{{ route('material-reports.head-office') }}" class="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
                         <div>
                             <label for="search" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{{ __('Search') }}</label>
                             <input
@@ -20,7 +22,7 @@
                                 name="search"
                                 id="search"
                                 value="{{ request('search') }}"
-                                placeholder="{{ __('Material or employee name...') }}"
+                                placeholder="{{ __('Material name...') }}"
                                 class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                             />
                         </div>
@@ -86,7 +88,7 @@
                                 {{ __('Filter') }}
                             </button>
                             <a
-                                href="{{ route('site-officer.employee-assignments.index') }}"
+                                href="{{ route('material-reports.head-office') }}"
                                 class="inline-flex items-center rounded-md bg-gray-200 px-4 py-2 text-sm font-semibold text-gray-800 hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600"
                             >
                                 {{ __('Reset') }}
@@ -96,65 +98,57 @@
                 </div>
             </div>
 
-            {{-- All Assignments Table --}}
+            {{-- Report Table --}}
             <div class="overflow-hidden shadow-sm sm:rounded-lg bg-white dark:bg-gray-800">
-                <div class="p-6 text-gray-900 dark:text-gray-100">
-                    <h3 class="mb-4 text-sm font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">{{ __('All assignments') }}</h3>
+                <div class="p-6">
                     <div class="overflow-x-auto">
-                        <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                            <thead class="bg-gray-50 dark:bg-gray-700">
-                                <tr>
-                                    <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-300">{{ __('Date') }}</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-300">{{ __('Project') }}</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-300">{{ __('Material') }}</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-300">{{ __('Quantity') }}</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-300">{{ __('Employee') }}</th>
-                                    <th class="px-6 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-300">{{ __('History') }}</th>
+                        <table class="w-full">
+                            <thead>
+                                <tr class="border-b border-gray-200 dark:border-gray-700">
+                                    <th class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-600 dark:text-gray-300">{{ __('Material Name') }}</th>
+                                    <th class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-600 dark:text-gray-300">{{ __('Unit of Measurement') }}</th>
+                                    <th class="px-6 py-3 text-right text-xs font-semibold uppercase tracking-wider text-gray-600 dark:text-gray-300">{{ __('Opening Stock') }}</th>
+                                    <th class="px-6 py-3 text-right text-xs font-semibold uppercase tracking-wider text-gray-600 dark:text-gray-300">{{ __('Total Distributed') }}</th>
+                                    <th class="px-6 py-3 text-right text-xs font-semibold uppercase tracking-wider text-gray-600 dark:text-gray-300">{{ __('Physical Available') }}</th>
                                 </tr>
                             </thead>
-                            <tbody class="divide-y divide-gray-200 dark:divide-gray-700" x-data="{ expandedAssignment: null }">
-                                @forelse ($assignments as $assignment)
-                                    <tr class="hover:bg-gray-50 dark:hover:bg-gray-750">
-                                        <td class="whitespace-nowrap px-6 py-4 text-sm text-gray-500 dark:text-gray-300">{{ $assignment->assigned_date->format('M d, Y') }}</td>
-                                        <td class="whitespace-nowrap px-6 py-4 text-sm text-gray-500 dark:text-gray-300">
-                                            <span class="inline-flex items-center rounded-full bg-blue-100 px-3 py-1 text-xs font-semibold text-blue-800 dark:bg-blue-900/30 dark:text-blue-300">{{ $assignment->project->project_code }}</span>
+                            <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
+                                @forelse ($materials as $material)
+                                    <tr class="hover:bg-gray-50 dark:hover:bg-gray-750 transition-colors">
+                                        <td class="px-6 py-4">
+                                            <span class="block font-medium text-gray-900 dark:text-gray-100">{{ $material['material_name'] }}</span>
                                         </td>
-                                        <td class="whitespace-nowrap px-6 py-4 text-sm text-gray-900 dark:text-gray-100">{{ $assignment->material->material_name }}</td>
-                                        <td class="whitespace-nowrap px-6 py-4 text-sm text-gray-500 dark:text-gray-300">
-                                            <span class="inline-flex items-center rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold text-amber-800 dark:bg-amber-900/30 dark:text-amber-300">{{ $assignment->quantity }}</span>
+                                        <td class="px-6 py-4 text-sm text-gray-600 dark:text-gray-400">
+                                            {{ $material['unit_of_measure'] }}
                                         </td>
-                                        <td class="whitespace-nowrap px-6 py-4 text-sm text-gray-500 dark:text-gray-300">{{ $assignment->employee->first_name }} {{ $assignment->employee->last_name }}</td>
-                                        <td class="whitespace-nowrap px-6 py-4 text-right">
-                                            <button
-                                                type="button"
-                                                class="inline-flex items-center rounded-md bg-slate-900 px-3 py-2 text-xs font-semibold text-white hover:bg-slate-700 dark:bg-slate-100 dark:text-slate-900 dark:hover:bg-white"
-                                                @click="expandedAssignment = expandedAssignment === {{ $assignment->id }} ? null : {{ $assignment->id }}"
-                                            >
-                                                {{ __('History') }}
-                                            </button>
+                                        <td class="px-6 py-4 text-right">
+                                            <span class="inline-flex items-center rounded-full bg-blue-100 px-3 py-1 text-sm font-semibold text-blue-800 dark:bg-blue-900/30 dark:text-blue-300">{{ $material['opening_stock'] }}</span>
                                         </td>
-                                    </tr>
-                                    {{-- Expandable details row --}}
-                                    <tr x-show="expandedAssignment === {{ $assignment->id }}" x-cloak class="bg-gray-50 dark:bg-gray-750">
-                                        <td colspan="6" class="px-6 py-4">
-                                            <div class="space-y-2 text-sm">
-                                                <p><span class="font-semibold text-gray-700 dark:text-gray-300">{{ __('Project Name:') }}</span> {{ $assignment->project->project_name }}</p>
-                                                <p><span class="font-semibold text-gray-700 dark:text-gray-300">{{ __('Material Description:') }}</span> {{ $assignment->material->material_description ?? '—' }}</p>
-                                                <p><span class="font-semibold text-gray-700 dark:text-gray-300">{{ __('Employee Job Title:') }}</span> {{ $assignment->employee->job_title }}</p>
-                                                <p><span class="font-semibold text-gray-700 dark:text-gray-300">{{ __('Assignment Date:') }}</span> {{ $assignment->assigned_date->format('M d, Y') }}</p>
-                                                <p><span class="font-semibold text-gray-700 dark:text-gray-300">{{ __('Shoe Number:') }}</span> {{ __('To be added') }}</p>
-                                            </div>
+                                        <td class="px-6 py-4 text-right">
+                                            <span class="inline-flex items-center rounded-full bg-orange-100 px-3 py-1 text-sm font-semibold text-orange-800 dark:bg-orange-900/30 dark:text-orange-300">{{ $material['total_distributed'] }}</span>
+                                        </td>
+                                        <td class="px-6 py-4 text-right">
+                                            <span class="inline-flex items-center rounded-full bg-emerald-100 px-3 py-1 text-sm font-semibold text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300">{{ $material['physical_available'] }}</span>
                                         </td>
                                     </tr>
                                 @empty
                                     <tr>
-                                        <td colspan="6" class="px-6 py-10 text-center text-sm text-gray-500 dark:text-gray-400">{{ __('No assignments found.') }}</td>
+                                        <td colspan="5" class="px-6 py-12">
+                                            <div class="flex flex-col items-center justify-center">
+                                                <svg class="h-12 w-12 text-gray-400 dark:text-gray-600 mb-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M20.25 7.5l-.625 10.632a2.25 2.25 0 01-2.247 2.118H6.622a2.25 2.25 0 01-2.247-2.118L3.75 7.5M10 11.25h4M3.375 7.5h17.25M6.75 7.5V4.5a2.25 2.25 0 012.25-2.25h3a2.25 2.25 0 012.25 2.25v3" />
+                                                </svg>
+                                                <p class="text-center text-sm font-medium text-gray-600 dark:text-gray-400">
+                                                    {{ __('No materials found.') }}
+                                                </p>
+                                            </div>
+                                        </td>
                                     </tr>
                                 @endforelse
                             </tbody>
                         </table>
                     </div>
-                    <div class="mt-6">{{ $assignments->links() }}</div>
+                    <div class="mt-6">{{ $materials->links() }}</div>
                 </div>
             </div>
         </div>

@@ -140,15 +140,55 @@ class SiteOfficerEmployeeAssignmentController extends Controller
             })
             ->pluck('id');
 
-        $assignments = MaterialEmployeeAssignment::query()
+        $assignmentsQuery = MaterialEmployeeAssignment::query()
             ->whereIn('project_id', $projectIds)
-            ->with(['material', 'project', 'employee'])
-            ->latest()
-            ->paginate(15);
+            ->with(['material', 'project', 'employee']);
+
+        if ($request->filled('search')) {
+            $search = $request->get('search');
+            $assignmentsQuery->where(function ($query) use ($search): void {
+                $query
+                    ->whereHas('material', function ($materialQuery) use ($search): void {
+                        $materialQuery->where('material_name', 'like', "%{$search}%");
+                    })
+                    ->orWhereHas('employee', function ($employeeQuery) use ($search): void {
+                        $employeeQuery
+                            ->where('first_name', 'like', "%{$search}%")
+                            ->orWhere('last_name', 'like', "%{$search}%");
+                    });
+            });
+        }
+
+        if ($request->filled('project_id')) {
+            $assignmentsQuery->where('project_id', $request->get('project_id'));
+        }
+
+        if ($request->filled('from_date')) {
+            $assignmentsQuery->whereDate('assigned_date', '>=', $request->get('from_date'));
+        }
+        if ($request->filled('to_date')) {
+            $assignmentsQuery->whereDate('assigned_date', '<=', $request->get('to_date'));
+        }
+
+        if ($request->filled('quarter')) {
+            $quarter = (int) $request->get('quarter');
+            $assignmentsQuery
+                ->whereMonth('assigned_date', '>=', (($quarter - 1) * 3) + 1)
+                ->whereMonth('assigned_date', '<=', $quarter * 3);
+        }
+
+        $assignments = $assignmentsQuery->latest()->paginate(15)->withQueryString();
+
+        $projects = Project::query()
+            ->when(! $request->user()->hasAnyRole(['Admin', 'HSE Officer']), function ($query) use ($request) {
+                return $query->where('site_officer_id', $request->user()->id);
+            })
+            ->orderBy('project_name')
+            ->get();
 
         return view('site-officer.employee-assignments.index', [
             'assignments' => $assignments,
-            'employees' => Employee::orderBy('first_name')->orderBy('last_name')->get(),
+            'projects' => $projects,
             'employeeHistoryUrlTemplate' => route('site-officer.employees.assignment-history', ['employee' => '__EMPLOYEE__']),
         ]);
     }

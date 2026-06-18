@@ -133,9 +133,9 @@
                                 <div class="space-y-1">
                                     {!! $sidebarParent(__('Projects'), $icons['projects'], 'openProjects') !!}
                                     <div x-show="openProjects" x-transition class="space-y-1">
-                                        @hasanyrole('HSE Site Officer|HSE Officer')
+                                        @role('HSE Site Officer')
                                             {!! $sidebarSubLink(route('site-officer.projects.index'), __('My Project'), request()->routeIs('site-officer.projects.*')) !!}
-                                        @endhasanyrole
+                                        @endrole
                                         @hasanyrole('Admin|HSE Officer')
                                             {!! $sidebarSubLink(route('projects.index'), __('Projects'), request()->routeIs('projects.*')) !!}
                                         @endhasanyrole
@@ -148,9 +148,9 @@
                                 <div class="space-y-1">
                                     {!! $sidebarParent(__('Assign Material'), $icons['assign'], 'openAssign') !!}
                                     <div x-show="openAssign" x-transition class="space-y-1">
-                                        @hasanyrole('HSE Site Officer|HSE Officer')
+                                        @role('HSE Site Officer')
                                             {!! $sidebarSubLink(route('site-officer.employee-assignments.create'), __('Assign to employee'), request()->routeIs('site-officer.employee-assignments.create')) !!}
-                                        @endhasanyrole
+                                        @endrole
                                         @role('HSE Officer')
                                             {!! $sidebarSubLink(route('material-assignments.create'), __('Assign to Project'), request()->routeIs('material-assignments.*')) !!}
                                         @endrole
@@ -163,12 +163,9 @@
                                 <div class="space-y-1">
                                     {!! $sidebarParent(__('Report'), $icons['report'], 'openReport') !!}
                                     <div x-show="openReport" x-transition class="space-y-1">
-                                        @hasanyrole('HSE Site Officer|HSE Officer')
-                                            {!! $sidebarSubLink(route('site-officer.material-reports.index'), __('Material Balance Report'), request()->routeIs('site-officer.material-reports.*')) !!}
-                                        @endhasanyrole
                                         @role('HSE Officer')
-                                            {!! $sidebarSubLink(route('material-reports.inventory'), __('Material Inventory Report'), request()->routeIs('material-reports.inventory')) !!}
-                                            {!! $sidebarSubLink(route('material-reports.index'), __('Project Report'), request()->routeIs('material-reports.index', 'material-reports.show')) !!}
+                                            {!! $sidebarSubLink(route('material-reports.head-office'), __('Head Office Material Report'), request()->routeIs('material-reports.head-office')) !!}
+                                            {!! $sidebarSubLink(route('material-reports.site'), __('Site Material Reports'), request()->routeIs('material-reports.site')) !!}
                                         @endrole
                                         @hasanyrole('HSE Site Officer|HSE Officer')
                                             {!! $sidebarSubLink(route('site-officer.employee-assignments.index'), __('Employee Assignment History'), request()->routeIs('site-officer.employee-assignments.index')) !!}

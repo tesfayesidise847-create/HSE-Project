@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Project;
 use App\Models\User;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Redirect;
@@ -11,17 +12,28 @@ use Illuminate\View\View;
 
 class ProjectController extends Controller
 {
-    public function index(): View
+    public function index(Request $request): View
     {
+        $projects = Project::query()
+            ->with('siteOfficer')
+            ->when(! $request->user()->hasAnyRole(['Admin', 'HSE Officer']), function ($query) use ($request) {
+                return $query->where('site_officer_id', $request->user()->id);
+            })
+            ->orderBy('project_name')
+            ->paginate(10);
+
+        $isAdmin = $request->user()->hasAnyRole(['Admin', 'HSE Officer']);
+
         return view('projects.index', [
-            'projects' => Project::with('siteOfficer')->latest()->paginate(10),
+            'projects' => $projects,
+            'isAdmin' => $isAdmin,
         ]);
     }
 
     public function create(): View
     {
         return view('projects.create', [
-            'project' => new Project(),
+            'project' => new Project,
             'siteOfficers' => $this->siteOfficers(),
         ]);
     }
@@ -72,7 +84,7 @@ class ProjectController extends Controller
     }
 
     /**
-     * @return \Illuminate\Database\Eloquent\Collection<int, User>
+     * @return Collection<int, User>
      */
     private function siteOfficers()
     {
