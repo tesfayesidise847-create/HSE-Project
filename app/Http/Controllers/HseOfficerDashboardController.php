@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\MaterialDashboardService;
+use App\Models\Material;
 use App\Models\MaterialProjectAssignment;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -21,7 +22,7 @@ class HseOfficerDashboardController extends Controller
             ->limit(8)
             ->get();
 
-        $recentMaterials = \App\Models\Material::latest()->paginate(9);
+        $recentMaterials = Material::latest()->paginate(9);
 
         return view('hse-officer.dashboard', [
             'stats' => $stats,

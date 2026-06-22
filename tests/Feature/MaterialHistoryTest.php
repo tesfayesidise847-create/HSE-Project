@@ -4,7 +4,6 @@ use App\Models\Material;
 use App\Models\UnitOfMeasure;
 use App\Models\User;
 use Database\Seeders\RoleSeeder;
-use Illuminate\Support\Str;
 
 beforeEach(function () {
     $this->seed(RoleSeeder::class);

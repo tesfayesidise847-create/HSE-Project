@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\EmployeeController;
+use App\Http\Controllers\HseOfficerMaterialRequestController;
 use App\Http\Controllers\MaterialAssignmentController;
 use App\Http\Controllers\MaterialController;
 use App\Http\Controllers\MaterialHistoryController;
@@ -13,6 +14,7 @@ use App\Http\Controllers\ProjectController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\SiteOfficerEmployeeAssignmentController;
 use App\Http\Controllers\SiteOfficerMaterialReportController;
+use App\Http\Controllers\SiteOfficerMaterialRequestController;
 use App\Http\Controllers\SiteOfficerProjectController;
 use App\Http\Controllers\SiteOfficerProjectEmployeeController;
 use App\Http\Controllers\UserController;
@@ -81,6 +83,17 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('employee-assignments/create', [SiteOfficerEmployeeAssignmentController::class, 'create'])->name('employee-assignments.create');
         Route::post('employee-assignments', [SiteOfficerEmployeeAssignmentController::class, 'store'])->name('employee-assignments.store');
         Route::get('employees/{employee}/assignment-history', [SiteOfficerEmployeeAssignmentController::class, 'employeeHistory'])->name('employees.assignment-history');
+
+        Route::get('material-requests', [SiteOfficerMaterialRequestController::class, 'index'])->name('material-requests.index');
+        Route::get('material-requests/create', [SiteOfficerMaterialRequestController::class, 'create'])->name('material-requests.create');
+        Route::post('material-requests', [SiteOfficerMaterialRequestController::class, 'store'])->name('material-requests.store');
+        Route::get('material-requests/{materialRequest}', [SiteOfficerMaterialRequestController::class, 'show'])->name('material-requests.show');
+    });
+
+    Route::middleware('role:HSE Officer')->prefix('hse-officer')->name('hse-officer.')->group(function () {
+        Route::get('material-requests', [HseOfficerMaterialRequestController::class, 'index'])->name('material-requests.index');
+        Route::post('material-requests/{materialRequest}/approve', [HseOfficerMaterialRequestController::class, 'approve'])->name('material-requests.approve');
+        Route::post('material-requests/{materialRequest}/reject', [HseOfficerMaterialRequestController::class, 'reject'])->name('material-requests.reject');
     });
 
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');

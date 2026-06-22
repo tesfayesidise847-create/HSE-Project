@@ -24,7 +24,7 @@ class EmployeeController extends Controller
     public function create(): View
     {
         return view('employees.create', [
-            'employee' => new Employee(),
+            'employee' => new Employee,
         ]);
     }
 

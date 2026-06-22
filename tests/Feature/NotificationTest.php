@@ -5,6 +5,7 @@ use App\Models\Material;
 use App\Models\MaterialProjectAssignment;
 use App\Models\Project;
 use App\Models\User;
+use App\Notifications\WorkflowNotification;
 use Database\Seeders\RoleSeeder;
 
 beforeEach(function () {
@@ -139,7 +140,7 @@ it('returns unread notifications for the notification bell api', function () {
     $user = User::factory()->create();
     $user->assignRole('HSE Officer');
 
-    $user->notify(new \App\Notifications\WorkflowNotification(
+    $user->notify(new WorkflowNotification(
         category: 'material_created',
         title: 'Test notification',
         message: 'A material was created.',

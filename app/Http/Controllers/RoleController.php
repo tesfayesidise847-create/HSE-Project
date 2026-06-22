@@ -21,7 +21,7 @@ class RoleController extends Controller
     public function create(): View
     {
         return view('roles.create', [
-            'role' => new Role(),
+            'role' => new Role,
         ]);
     }
 
