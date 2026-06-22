@@ -7,9 +7,49 @@
     </x-slot>
 
     <div class="py-12">
-        <div class="max-w-7xl mx-auto space-y-8 sm:px-6 lg:px-8">
+        <div class="max-w-7xl mx-auto space-y-8 sm:px-6 lg:px-8" x-data="projectSearch()">
+
+            {{-- Real-time search bar --}}
+            <div class="rounded-lg bg-white p-4 shadow-sm dark:bg-gray-800">
+                <div class="relative">
+                    <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+                        <svg class="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M9 3.5a5.5 5.5 0 100 11 5.5 5.5 0 000-11zM2 9a7 7 0 1112.452 4.391l3.328 3.329a.75.75 0 11-1.06 1.06l-3.329-3.328A7 7 0 012 9z" clip-rule="evenodd" />
+                        </svg>
+                    </div>
+                    <input
+                        type="text"
+                        id="project-search"
+                        x-model="query"
+                        @input="filter()"
+                        placeholder="{{ __('Type to search projects...') }}"
+                        class="block w-full rounded-md border-gray-300 pl-10 pr-28 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 dark:placeholder-gray-500"
+                        autocomplete="off"
+                    />
+                    <div class="absolute inset-y-0 right-0 flex items-center pr-3 gap-2">
+                        <span x-show="query.length > 0" x-cloak class="text-xs text-gray-400" x-text="visibleCount + ' result' + (visibleCount !== 1 ? 's' : '')"></span>
+                        <button
+                            x-show="query.length > 0"
+                            x-cloak
+                            @click="query = ''; filter();"
+                            type="button"
+                            class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
+                            title="{{ __('Clear search') }}"
+                        >
+                            <svg class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.28 7.22a.75.75 0 00-1.06 1.06L8.94 10l-1.72 1.72a.75.75 0 101.06 1.06L10 11.06l1.72 1.72a.75.75 0 101.06-1.06L11.06 10l1.72-1.72a.75.75 0 00-1.06-1.06L10 8.94 8.28 7.22z" clip-rule="evenodd" />
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+                <div x-show="query.length > 0 && visibleCount === 0" x-cloak class="mt-3 text-center text-sm text-gray-500 dark:text-gray-400">
+                    {{ __('No projects match your search.') }}
+                </div>
+            </div>
+
+            {{-- Project cards --}}
             @forelse ($projects as $project)
-                <div class="overflow-hidden bg-white shadow-sm sm:rounded-lg dark:bg-gray-800">
+                <div class="project-card overflow-hidden bg-white shadow-sm sm:rounded-lg dark:bg-gray-800" data-name="{{ strtolower($project->project_name) }}">
                     <div class="border-b border-gray-100 px-6 py-5 dark:border-gray-700">
                         <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                             <div>
@@ -73,4 +113,28 @@
             @endforelse
         </div>
     </div>
+
+    <script>
+    function projectSearch() {
+        return {
+            query: '',
+            visibleCount: 0,
+            init() {
+                this.visibleCount = document.querySelectorAll('.project-card').length;
+            },
+            filter() {
+                const q = this.query.toLowerCase().trim();
+                const cards = document.querySelectorAll('.project-card');
+                let count = 0;
+                cards.forEach(card => {
+                    const name = card.getAttribute('data-name') || '';
+                    const match = q === '' || name.startsWith(q);
+                    card.style.display = match ? '' : 'none';
+                    if (match) count++;
+                });
+                this.visibleCount = count;
+            }
+        };
+    }
+    </script>
 </x-app-layout>

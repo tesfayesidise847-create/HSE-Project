@@ -7,18 +7,49 @@ use App\Models\MaterialHistory;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
-use Symfony\Component\HttpFoundation\Response;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xls;
+use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class MaterialHistoryController extends Controller
 {
-    public function index(): View
+    public function index(Request $request): View
     {
-        $histories = MaterialHistory::with(['material', 'createdBy'])
-            ->latest()
-            ->paginate(15);
+        $query = MaterialHistory::with(['material', 'createdBy'])->latest();
+
+        $hasFilter = false;
+
+        if ($request->filled('date')) {
+            $query->whereDate('created_at', $request->input('date'));
+            $hasFilter = true;
+        }
+
+        if ($request->filled('quarter')) {
+            $quarter = $request->input('quarter');
+            $year = $request->input('year', date('Y'));
+
+            $months = match ($quarter) {
+                'Q1' => [1, 3],
+                'Q2' => [4, 6],
+                'Q3' => [7, 9],
+                'Q4' => [10, 12],
+                default => null,
+            };
+
+            if ($months) {
+                $query->whereYear('created_at', $year)
+                    ->whereMonth('created_at', '>=', $months[0])
+                    ->whereMonth('created_at', '<=', $months[1]);
+                $hasFilter = true;
+            }
+        }
+
+        if (! $hasFilter) {
+            $histories = $query->take(10)->get();
+        } else {
+            $histories = $query->paginate(10)->withQueryString();
+        }
 
         $materials = Material::with('histories')
             ->orderBy('material_name')
@@ -42,9 +73,32 @@ class MaterialHistoryController extends Controller
     public function export(Request $request): Response
     {
         $format = strtolower($request->query('format', 'xlsx'));
-        $histories = MaterialHistory::with(['material', 'createdBy'])
-            ->latest()
-            ->get();
+        $query = MaterialHistory::with(['material', 'createdBy'])->latest();
+
+        if ($request->filled('date')) {
+            $query->whereDate('created_at', $request->input('date'));
+        }
+
+        if ($request->filled('quarter')) {
+            $quarter = $request->input('quarter');
+            $year = $request->input('year', date('Y'));
+
+            $months = match ($quarter) {
+                'Q1' => [1, 3],
+                'Q2' => [4, 6],
+                'Q3' => [7, 9],
+                'Q4' => [10, 12],
+                default => null,
+            };
+
+            if ($months) {
+                $query->whereYear('created_at', $year)
+                    ->whereMonth('created_at', '>=', $months[0])
+                    ->whereMonth('created_at', '<=', $months[1]);
+            }
+        }
+
+        $histories = $query->get();
 
         if ($format === 'pdf') {
             $pdf = Pdf::loadView('material-histories.export', [
@@ -55,7 +109,7 @@ class MaterialHistoryController extends Controller
             return $pdf->download('material_history.pdf');
         }
 
-        $spreadsheet = new Spreadsheet();
+        $spreadsheet = new Spreadsheet;
         $sheet = $spreadsheet->getActiveSheet();
         $sheet->setTitle('Material History');
 

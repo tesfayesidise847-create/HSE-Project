@@ -23,12 +23,10 @@
         <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">{{ __('Choose the unit used to track this material quantity.') }}</p>
     </div>
 
-    @if (! $material->exists)
-        <div>
-            <x-input-label for="quantity" :value="__('Head Office Quantity')" />
-            <x-text-input id="quantity" name="quantity" type="number" min="0" class="mt-1 block w-full" :value="old('quantity', $material->quantity ?? 0)" required />
-            <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">{{ __('Initial stock balance at head office for this material.') }}</p>
-            <x-input-error :messages="$errors->get('quantity')" class="mt-2" />
-        </div>
-    @endif
+    <div>
+        <x-input-label for="quantity" :value="__('Head Office Quantity')" />
+        <x-text-input id="quantity" name="quantity" type="number" min="0" class="mt-1 block w-full" :value="old('quantity', $material->quantity ?? 0)" required />
+        <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">{{ __('Stock balance at head office for this material.') }}</p>
+        <x-input-error :messages="$errors->get('quantity')" class="mt-2" />
+    </div>
 </div>

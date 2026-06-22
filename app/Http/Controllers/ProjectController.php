@@ -17,13 +17,19 @@ class ProjectController extends Controller
 {
     public function index(Request $request): View
     {
+        $search = $request->query('search');
+
         $projects = Project::query()
             ->with('siteOfficer')
             ->when(! $request->user()->hasAnyRole(['Admin', 'HSE Officer']), function ($query) use ($request) {
                 return $query->where('site_officer_id', $request->user()->id);
             })
+            ->when($search, function ($query) use ($search) {
+                return $query->where('project_name', 'like', $search.'%');
+            })
             ->orderBy('project_name')
-            ->paginate(10);
+            ->paginate(10)
+            ->withQueryString();
 
         $isAdmin = $request->user()->hasAnyRole(['Admin', 'HSE Officer']);
 

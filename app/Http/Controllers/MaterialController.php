@@ -60,10 +60,22 @@ class MaterialController extends Controller
         $data = $request->validate([
             'material_name' => ['required', 'string', 'max:255'],
             'material_description' => ['required', 'string'],
+            'quantity' => ['required', 'integer', 'min:0'],
             'unit_of_measure_id' => ['required', 'exists:unit_of_measures,id'],
         ]);
 
+        $oldQuantity = $material->quantity;
+
         $material->update($data);
+
+        if ($oldQuantity !== $material->quantity) {
+            $material->recordHistory(
+                'stock_updated',
+                $material->quantity - $oldQuantity,
+                'Stock balance updated manually.',
+                $request->user()->id
+            );
+        }
 
         app(WorkflowNotificationService::class)->materialUpdated($material, $request->user());
 

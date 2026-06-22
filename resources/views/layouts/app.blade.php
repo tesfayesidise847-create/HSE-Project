@@ -122,6 +122,7 @@
                                             {!! $sidebarSubLink(route('materials.index'), __('Manage Material'), request()->routeIs('materials.*')) !!}
                                         @endhasanyrole
                                         @role('HSE Officer')
+                                            {!! $sidebarSubLink(route('material-quantities.index'), __('Add Quantity'), request()->routeIs('material-quantities.*')) !!}
                                             {!! $sidebarSubLink(route('material-histories.index'), __('Material History'), request()->routeIs('material-histories.*')) !!}
                                         @endrole
                                     </div>

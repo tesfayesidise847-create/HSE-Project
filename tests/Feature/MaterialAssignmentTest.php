@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\Material;
+use App\Models\MaterialHistory;
 use App\Models\MaterialProjectAssignment;
 use App\Models\Project;
 use App\Models\UnitOfMeasure;
@@ -133,4 +134,35 @@ it('requires material quantity when hse officer creates a material', function ()
 
     expect(Material::first()->quantity)->toBe(25);
     expect(Material::first()->unit_of_measure_id)->toBe($unitOfMeasure->id);
+});
+
+it('allows hse officer to update material quantity and records history', function () {
+    $officer = createHseOfficer();
+    $unitOfMeasure = UnitOfMeasure::first();
+
+    $material = Material::create([
+        'material_name' => 'Vest',
+        'material_description' => 'Safety vest',
+        'quantity' => 10,
+        'unit_of_measure_id' => $unitOfMeasure->id,
+    ]);
+
+    $this->actingAs($officer)->put(route('materials.update', $material), [
+        'material_name' => 'Vest Updated',
+        'material_description' => 'Safety vest updated',
+        'quantity' => 15,
+        'unit_of_measure_id' => $unitOfMeasure->id,
+    ])->assertRedirect(route('materials.index'));
+
+    expect($material->fresh()->quantity)->toBe(15);
+    expect($material->fresh()->material_name)->toBe('Vest Updated');
+
+    $history = MaterialHistory::where('material_id', $material->id)
+        ->where('event_type', 'stock_updated')
+        ->first();
+
+    expect($history)->not->toBeNull();
+    expect($history->quantity_change)->toBe(5);
+    expect($history->balance_before)->toBe(10);
+    expect($history->balance_after)->toBe(15);
 });
