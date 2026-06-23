@@ -4,6 +4,7 @@ use App\Models\Employee;
 use App\Models\User;
 use App\Services\EmployeeSpreadsheetService;
 use Database\Seeders\RoleSeeder;
+use Illuminate\Http\UploadedFile;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xls;
 
@@ -37,7 +38,7 @@ it('imports employees from xls file', function () {
 
     $this->actingAs($admin)
         ->post(route('employees.import.store'), [
-            'file' => new \Illuminate\Http\UploadedFile($path, 'employees.xls', 'application/vnd.ms-excel', null, true),
+            'file' => new UploadedFile($path, 'employees.xls', 'application/vnd.ms-excel', null, true),
         ])
         ->assertRedirect(route('employees.index'))
         ->assertSessionHas('success');

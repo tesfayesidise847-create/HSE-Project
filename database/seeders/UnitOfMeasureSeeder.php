@@ -2,7 +2,6 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 
@@ -20,7 +19,7 @@ class UnitOfMeasureSeeder extends Seeder
             ['name' => 'Liter', 'created_at' => now(), 'updated_at' => now()],
             ['name' => 'Bag', 'created_at' => now(), 'updated_at' => now()],
             ['name' => 'Roll', 'created_at' => now(), 'updated_at' => now()],
-             ['name' => 'Pack', 'created_at' => now(), 'updated_at' => now()],
+            ['name' => 'Pack', 'created_at' => now(), 'updated_at' => now()],
         ]);
     }
 }

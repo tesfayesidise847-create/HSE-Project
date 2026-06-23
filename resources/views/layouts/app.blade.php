@@ -85,7 +85,7 @@
                     },
                     openMaterials: {{ request()->routeIs('materials.*', 'material-histories.*') ? 'true' : 'false' }},
                     openProjects: {{ (request()->routeIs('projects.*') || request()->routeIs('site-officer.projects.*')) ? 'true' : 'false' }},
-                    openAssign: {{ (request()->routeIs('material-assignments.*') || request()->routeIs('site-officer.employee-assignments.create')) ? 'true' : 'false' }},
+                    openAssign: {{ (request()->routeIs('material-assignments.*') || request()->routeIs('site-officer.employee-assignments.create') || request()->routeIs('site-officer.material-requests.*')) ? 'true' : 'false' }},
                     openReport: {{ (request()->routeIs('material-reports.*', 'site-officer.material-reports.*', 'site-officer.employee-assignments.index')) ? 'true' : 'false' }},
                     openUserManagement: {{ (request()->routeIs('users.*') || request()->routeIs('roles.*') || request()->routeIs('employees.*')) ? 'true' : 'false' }}
                 }"
@@ -151,9 +151,11 @@
                                     {!! $sidebarParent(__('Assign Material'), $icons['assign'], 'openAssign') !!}
                                     <div x-show="openAssign" x-transition class="space-y-1">
                                         @role('HSE Site Officer')
+                                            {!! $sidebarSubLink(route('site-officer.material-requests.create'), __('Request Material'), request()->routeIs('site-officer.material-requests.*')) !!}
                                             {!! $sidebarSubLink(route('site-officer.employee-assignments.create'), __('Assign to employee'), request()->routeIs('site-officer.employee-assignments.create')) !!}
                                         @endrole
                                         @role('HSE Officer')
+                                            {!! $sidebarSubLink(route('hse-officer.material-requests.index'), __('Material Requests'), request()->routeIs('hse-officer.material-requests.*')) !!}
                                             {!! $sidebarSubLink(route('material-assignments.create'), __('Assign to Project'), request()->routeIs('material-assignments.*')) !!}
                                         @endrole
                                     </div>

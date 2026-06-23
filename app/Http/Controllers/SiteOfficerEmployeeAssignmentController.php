@@ -36,6 +36,7 @@ class SiteOfficerEmployeeAssignmentController extends Controller
                 ->map(fn (array $row): array => [
                     'material_id' => $row['material']->id,
                     'label' => $row['material']->material_name.' (Available: '.$row['available'].')',
+                    'search' => strtolower($row['material']->material_name),
                 ])
                 ->values()
                 ->all();

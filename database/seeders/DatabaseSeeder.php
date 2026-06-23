@@ -17,7 +17,7 @@ class DatabaseSeeder extends Seeder
         $this->call([
             RoleSeeder::class,
             AdminSeeder::class,
-            \Database\Seeders\UnitOfMeasureSeeder::class,
+            UnitOfMeasureSeeder::class,
         ]);
     }
 }
