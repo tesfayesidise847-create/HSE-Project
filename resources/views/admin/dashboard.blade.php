@@ -55,7 +55,7 @@
             <div class="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-card dark:border-gray-800 dark:bg-gray-900 xl:col-span-2">
                 <div class="flex items-center justify-between border-b border-gray-100 px-6 py-4 dark:border-gray-800">
                     <div>
-                        <h3 class="text-sm font-semibold text-gray-900 dark:text-white">{{ __('Users by Role') }}</h3>
+                        <h3 class="text-sm font-semibold text-gray-900 dark:text-white">{{ __('Users vs Roles') }}</h3>
                         <p class="mt-0.5 text-xs text-gray-500 dark:text-gray-400">{{ __('Number of users assigned to each role') }}</p>
                     </div>
                     <div class="flex h-8 w-8 items-center justify-center rounded-lg bg-eec-500/10">

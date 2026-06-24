@@ -3,579 +3,133 @@
         <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
                 <h2 class="text-xl font-bold text-gray-900 dark:text-white">{{ __('Material Requests') }}</h2>
-                <p class="mt-0.5 text-sm text-gray-500 dark:text-gray-400">{{ __('Review and approve or reject material requests from Site Officers') }}</p>
+                <p class="mt-0.5 text-sm text-gray-500 dark:text-gray-400">{{ __('Review material requests from Site Officers.') }}</p>
             </div>
-            <div class="flex items-center gap-3">
-                {{-- Summary badges --}}
-                @php
-                    $pendingCount  = $requests->where(fn($r) => $r->isPending())->count();
-                    $approvedCount = $requests->where(fn($r) => $r->isApproved())->count();
-                    $rejectedCount = $requests->where(fn($r) => $r->isRejected())->count();
-                @endphp
-                @if ($pendingCount > 0)
-                    <span class="inline-flex items-center gap-1.5 rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold text-amber-800 dark:bg-amber-900/30 dark:text-amber-300">
-                        <span class="h-1.5 w-1.5 rounded-full bg-amber-500 pulse-dot"></span>
-                        {{ $pendingCount }} {{ __('Pending') }}
-                    </span>
-                @endif
-            </div>
+
+            @php
+                $pendingCount = $requests->where(fn ($materialRequest) => $materialRequest->isPending())->count();
+            @endphp
+
+            @if ($pendingCount > 0)
+                <span class="inline-flex items-center rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold text-amber-800 dark:bg-amber-900/30 dark:text-amber-300">
+                    {{ $pendingCount }} {{ __('Pending') }}
+                </span>
+            @endif
         </div>
     </x-slot>
 
-<<<<<<< HEAD
-    <div class="animate-fade-in space-y-4">
-
-        @if ($requests->isEmpty())
-            {{-- Empty state --}}
-            <div class="flex flex-col items-center justify-center rounded-2xl border border-dashed border-gray-300 bg-white py-16 dark:border-gray-700 dark:bg-gray-900">
-                <div class="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-gray-100 dark:bg-gray-800">
-                    <svg class="h-8 w-8 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="m12 3.75 7.5 4.125v8.25L12 20.25l-7.5-4.125v-8.25L12 3.75Z"/>
-                    </svg>
-=======
-    <div class="py-8 space-y-6">
-        {{-- Filters --}}
-        <div class="rounded-xl bg-white p-4 shadow-sm dark:bg-gray-800" x-data="{ showFilters: false }">
-            <div class="flex items-center justify-between">
-                <button type="button" @click="showFilters = !showFilters" class="flex items-center gap-2 text-sm font-medium text-gray-700 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white">
-                    <svg class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 3c2.755 0 5.455.232 8.083.678.533.09.917.556.917 1.096v1.044a2.25 2.25 0 0 1-.659 1.591L16.3 10.44A2.25 2.25 0 0 0 15.5 12v3.75a1.5 1.5 0 0 1-.879 1.366l-2.25 1.125a1.5 1.5 0 0 1-2.121-1.366V12a2.25 2.25 0 0 0-.8-1.56L4.659 6.409A2.25 2.25 0 0 1 4 4.818V3.774c0-.54.384-1.006.917-1.096A48.32 48.32 0 0 1 12 3Z" />
-                    </svg>
-                    {{ __('Filters') }}
-                    <span x-show="showFilters" class="text-xs text-gray-400">({{ __('click to hide') }})</span>
-                    <span x-show="!showFilters" class="text-xs text-gray-400">({{ __('click to show') }})</span>
-                </button>
-                @if (request()->anyFilled(['status', 'from_date', 'to_date', 'project_id']))
-                    <a href="{{ route('hse-officer.material-requests.index') }}" class="text-xs text-indigo-600 hover:text-indigo-500 dark:text-indigo-400">{{ __('Clear filters') }}</a>
-                @endif
-            </div>
-
-            <form method="GET" action="{{ route('hse-officer.material-requests.index') }}" x-show="showFilters" x-cloak x-transition class="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-5">
+    <div class="space-y-6">
+        <div class="rounded-lg bg-white p-4 shadow-sm dark:bg-gray-900">
+            <form method="GET" action="{{ route('hse-officer.material-requests.index') }}" class="grid grid-cols-1 gap-4 md:grid-cols-5">
                 <div>
                     <x-input-label for="status" :value="__('Status')" />
-                    <select id="status" name="status" class="mt-1 block w-full rounded-md border-gray-300 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300">
+                    <select id="status" name="status" class="mt-1 block w-full rounded-md border-gray-300 text-sm shadow-sm focus:border-cyan-500 focus:ring-cyan-500 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100">
                         <option value="">{{ __('All') }}</option>
                         <option value="pending" @selected(request('status') === 'pending')>{{ __('Pending') }}</option>
                         <option value="approved" @selected(request('status') === 'approved')>{{ __('Approved') }}</option>
                         <option value="rejected" @selected(request('status') === 'rejected')>{{ __('Rejected') }}</option>
                     </select>
                 </div>
+
                 <div>
                     <x-input-label for="project_id" :value="__('Project')" />
-                    <select id="project_id" name="project_id" class="mt-1 block w-full rounded-md border-gray-300 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300">
+                    <select id="project_id" name="project_id" class="mt-1 block w-full rounded-md border-gray-300 text-sm shadow-sm focus:border-cyan-500 focus:ring-cyan-500 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100">
                         <option value="">{{ __('All Projects') }}</option>
                         @foreach ($projects as $project)
-                            <option value="{{ $project->id }}" @selected(request('project_id') == $project->id)>{{ $project->project_code }}</option>
+                            <option value="{{ $project->id }}" @selected((string) request('project_id') === (string) $project->id)>
+                                {{ $project->project_code }}
+                            </option>
                         @endforeach
                     </select>
                 </div>
+
                 <div>
                     <x-input-label for="from_date" :value="__('From Date')" />
-                    <input id="from_date" name="from_date" type="date" value="{{ request('from_date') }}" class="mt-1 block w-full rounded-md border-gray-300 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300">
+                    <input id="from_date" name="from_date" type="date" value="{{ request('from_date') }}" class="mt-1 block w-full rounded-md border-gray-300 text-sm shadow-sm focus:border-cyan-500 focus:ring-cyan-500 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100">
                 </div>
+
                 <div>
                     <x-input-label for="to_date" :value="__('To Date')" />
-                    <input id="to_date" name="to_date" type="date" value="{{ request('to_date') }}" class="mt-1 block w-full rounded-md border-gray-300 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300">
+                    <input id="to_date" name="to_date" type="date" value="{{ request('to_date') }}" class="mt-1 block w-full rounded-md border-gray-300 text-sm shadow-sm focus:border-cyan-500 focus:ring-cyan-500 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100">
                 </div>
-                <div class="flex items-end">
-                    <button type="submit" class="inline-flex w-full items-center justify-center rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500">
+
+                <div class="flex items-end gap-2">
+                    <button type="submit" class="inline-flex w-full items-center justify-center rounded-md bg-cyan-700 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-cyan-600">
                         {{ __('Filter') }}
                     </button>
+                    @if (request()->anyFilled(['status', 'from_date', 'to_date', 'project_id']))
+                        <a href="{{ route('hse-officer.material-requests.index') }}" class="inline-flex items-center rounded-md border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-800">
+                            {{ __('Clear') }}
+                        </a>
+                    @endif
                 </div>
             </form>
         </div>
 
-        {{-- Requests Table --}}
-        <div class="overflow-hidden rounded-xl bg-white shadow-sm dark:bg-gray-800">
+        <div class="overflow-hidden rounded-lg bg-white shadow-sm dark:bg-gray-900">
             @if ($requests->isEmpty())
                 <div class="p-12 text-center">
-                    <svg class="mx-auto h-12 w-12 text-gray-400 dark:text-gray-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 0 0 2.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 0 0-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 0 0 .75-.75 2.25 2.25 0 0 0-.1-.664m-5.8 0A2.251 2.251 0 0 1 13.5 2.25H15a2.25 2.25 0 0 1 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V9.375c0-.621-.504-1.125-1.125-1.125H8.25ZM6.75 12h.008v.008H6.75V12Zm0 3h.008v.008H6.75V15Zm0 3h.008v.008H6.75V18Z" />
-                    </svg>
-                    <p class="mt-4 text-sm text-gray-500 dark:text-gray-400">
-                        @if (request()->anyFilled(['status', 'from_date', 'to_date', 'project_id']))
-                            {{ __('No material requests match your filters.') }}
-                            <a href="{{ route('hse-officer.material-requests.index') }}" class="ml-1 text-indigo-600 hover:text-indigo-500 dark:text-indigo-400">{{ __('Clear filters') }}</a>
-                        @else
-                            {{ __('No material requests yet.') }}
-                        @endif
-                    </p>
->>>>>>> 92683a169498c61dae9e5be240231f1e2eb13465
+                    <h3 class="text-sm font-semibold text-gray-900 dark:text-white">{{ __('No material requests') }}</h3>
+                    <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">{{ __('Material requests from Site Officers will appear here.') }}</p>
                 </div>
-                <h3 class="text-sm font-semibold text-gray-900 dark:text-white">{{ __('No material requests') }}</h3>
-                <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">{{ __('Material requests from Site Officers will appear here.') }}</p>
-            </div>
-
-        @else
-            {{-- Premium table --}}
-            <div class="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-card dark:border-gray-800 dark:bg-gray-900">
+            @else
                 <div class="overflow-x-auto">
-                    <table class="min-w-full premium-table">
-                        <thead>
+                    <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-800">
+                        <thead class="bg-gray-50 dark:bg-gray-800">
                             <tr>
-<<<<<<< HEAD
-                                <th>{{ __('Date') }}</th>
-                                <th>{{ __('Requested By') }}</th>
-                                <th>{{ __('Project') }}</th>
-                                <th>{{ __('Material') }}</th>
-                                <th>{{ __('Qty') }}</th>
-                                <th>{{ __('Justification') }}</th>
-                                <th>{{ __('File') }}</th>
-                                <th>{{ __('Status') }}</th>
-                                <th>{{ __('Actions') }}</th>
-=======
-                                <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-300">{{ __('Date') }}</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-300">{{ __('Requested By') }}</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-300">{{ __('Project') }}</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-300">{{ __('Material') }}</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-300">{{ __('Quantity') }}</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-300">{{ __('Status') }}</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-300">{{ __('Actions') }}</th>
->>>>>>> 92683a169498c61dae9e5be240231f1e2eb13465
+                                <th class="px-5 py-3 text-left text-xs font-semibold uppercase text-gray-500 dark:text-gray-400">{{ __('Date') }}</th>
+                                <th class="px-5 py-3 text-left text-xs font-semibold uppercase text-gray-500 dark:text-gray-400">{{ __('Requested By') }}</th>
+                                <th class="px-5 py-3 text-left text-xs font-semibold uppercase text-gray-500 dark:text-gray-400">{{ __('Project') }}</th>
+                                <th class="px-5 py-3 text-left text-xs font-semibold uppercase text-gray-500 dark:text-gray-400">{{ __('Material') }}</th>
+                                <th class="px-5 py-3 text-left text-xs font-semibold uppercase text-gray-500 dark:text-gray-400">{{ __('Qty') }}</th>
+                                <th class="px-5 py-3 text-left text-xs font-semibold uppercase text-gray-500 dark:text-gray-400">{{ __('Justification') }}</th>
+                                <th class="px-5 py-3 text-left text-xs font-semibold uppercase text-gray-500 dark:text-gray-400">{{ __('Status') }}</th>
+                                <th class="px-5 py-3 text-right text-xs font-semibold uppercase text-gray-500 dark:text-gray-400">{{ __('Actions') }}</th>
                             </tr>
                         </thead>
-                        <tbody class="divide-y divide-gray-100 bg-white dark:divide-gray-800 dark:bg-gray-900">
-                            @foreach ($requests as $request)
-<<<<<<< HEAD
-                                <tr class="group">
-                                    <td class="whitespace-nowrap px-5 py-4 text-xs text-gray-500 dark:text-gray-400">
-                                        <div class="font-medium text-gray-800 dark:text-gray-200">{{ $request->created_at->format('M d, Y') }}</div>
-                                        <div class="text-[11px] text-gray-400">{{ $request->created_at->format('h:i A') }}</div>
-=======
-                                <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors duration-150">
-                                    <td class="whitespace-nowrap px-6 py-4 text-sm text-gray-900 dark:text-gray-100">
-                                        {{ $request->created_at->format('M d, Y') }}
->>>>>>> 92683a169498c61dae9e5be240231f1e2eb13465
+                        <tbody class="divide-y divide-gray-100 dark:divide-gray-800">
+                            @foreach ($requests as $materialRequest)
+                                <tr>
+                                    <td class="whitespace-nowrap px-5 py-4 text-sm text-gray-600 dark:text-gray-300">
+                                        {{ $materialRequest->created_at->format('M d, Y') }}
                                     </td>
-                                    <td class="whitespace-nowrap px-5 py-4">
-                                        <div class="flex items-center gap-2">
-                                            <span class="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-eec-500 to-teal-600 text-[10px] font-bold text-white shadow-sm">
-                                                {{ strtoupper(substr($request->requester->name, 0, 1)) }}
-                                            </span>
-                                            <span class="text-sm font-medium text-gray-900 dark:text-gray-100">{{ $request->requester->name }}</span>
-                                        </div>
+                                    <td class="whitespace-nowrap px-5 py-4 text-sm font-medium text-gray-900 dark:text-gray-100">
+                                        {{ $materialRequest->requester->name }}
                                     </td>
-                                    <td class="whitespace-nowrap px-5 py-4">
-                                        <span class="inline-flex items-center rounded-lg bg-blue-50 px-2.5 py-1 text-xs font-semibold text-blue-700 dark:bg-blue-900/30 dark:text-blue-300">
-                                            {{ $request->project->project_code }}
-                                        </span>
+                                    <td class="whitespace-nowrap px-5 py-4 text-sm text-gray-600 dark:text-gray-300">
+                                        {{ $materialRequest->project->project_code }}
                                     </td>
-<<<<<<< HEAD
-                                    <td class="px-5 py-4">
-                                        <div class="text-sm font-medium text-gray-900 dark:text-gray-100">{{ $request->material->material_name }}</div>
-=======
-                                    <td class="whitespace-nowrap px-6 py-4 text-sm">
-                                        <a href="{{ route('hse-officer.material-requests.show', $request) }}" class="font-medium text-indigo-600 hover:text-indigo-500 dark:text-indigo-400">
-                                            {{ $request->material->material_name }}
+                                    <td class="px-5 py-4 text-sm">
+                                        <a href="{{ route('hse-officer.material-requests.show', $materialRequest) }}" class="font-medium text-cyan-700 hover:text-cyan-600 dark:text-cyan-300">
+                                            {{ $materialRequest->material->material_name }}
                                         </a>
->>>>>>> 92683a169498c61dae9e5be240231f1e2eb13465
                                     </td>
-                                    <td class="whitespace-nowrap px-5 py-4">
-                                        <span class="inline-flex items-center rounded-full bg-eec-50 px-2.5 py-0.5 text-xs font-semibold text-eec-700 dark:bg-eec-900/20 dark:text-eec-300">
-                                            {{ $request->quantity }}
-                                        </span>
+                                    <td class="whitespace-nowrap px-5 py-4 text-sm text-gray-600 dark:text-gray-300">
+                                        {{ $materialRequest->quantity }}
                                     </td>
-<<<<<<< HEAD
-                                    <td class="max-w-[180px] px-5 py-4">
-                                        <span title="{{ $request->description }}" class="line-clamp-2 text-xs text-gray-600 dark:text-gray-400">
-                                            {{ $request->description ?: '—' }}
-                                        </span>
+                                    <td class="max-w-xs px-5 py-4 text-sm text-gray-600 dark:text-gray-300">
+                                        {{ $materialRequest->description ?: '-' }}
                                     </td>
-                                    <td class="whitespace-nowrap px-5 py-4">
-                                        @if ($request->employee_file)
-                                            <a href="{{ asset('storage/' . $request->employee_file) }}" target="_blank"
-                                               class="inline-flex items-center gap-1 rounded-lg bg-indigo-50 px-2.5 py-1 text-xs font-medium text-indigo-700 hover:bg-indigo-100 transition-colors dark:bg-indigo-900/30 dark:text-indigo-300">
-                                                <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
-                                                </svg>
-                                                {{ __('File') }}
-                                            </a>
+                                    <td class="whitespace-nowrap px-5 py-4 text-sm">
+                                        @if ($materialRequest->isPending())
+                                            <span class="inline-flex rounded-full bg-amber-100 px-2.5 py-1 text-xs font-semibold text-amber-800 dark:bg-amber-900/30 dark:text-amber-300">{{ __('Pending') }}</span>
+                                        @elseif ($materialRequest->isApproved())
+                                            <span class="inline-flex rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-semibold text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300">{{ __('Approved') }}</span>
                                         @else
-                                            <span class="text-gray-400">—</span>
+                                            <span class="inline-flex rounded-full bg-rose-100 px-2.5 py-1 text-xs font-semibold text-rose-800 dark:bg-rose-900/30 dark:text-rose-300">{{ __('Rejected') }}</span>
                                         @endif
                                     </td>
-                                    <td class="whitespace-nowrap px-5 py-4">
-=======
-                                    <td class="whitespace-nowrap px-6 py-4 text-sm">
->>>>>>> 92683a169498c61dae9e5be240231f1e2eb13465
-                                        @if ($request->isPending())
-                                            <span class="inline-flex items-center gap-1.5 rounded-full bg-amber-100 px-2.5 py-1 text-xs font-semibold text-amber-800 dark:bg-amber-900/30 dark:text-amber-300">
-                                                <span class="h-1.5 w-1.5 rounded-full bg-amber-500 pulse-dot"></span>
-                                                {{ __('Pending') }}
-                                            </span>
-                                        @elseif ($request->isApproved())
-                                            <span class="inline-flex items-center gap-1.5 rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-semibold text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300">
-                                                <svg class="h-3 w-3 text-emerald-600" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.704 4.153a.75.75 0 0 1 .143 1.052l-8 10.5a.75.75 0 0 1-1.127.075l-4.5-4.5a.75.75 0 0 1 1.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 0 1 1.05-.143Z" clip-rule="evenodd"/></svg>
-                                                {{ __('Approved') }}
-                                            </span>
-                                        @elseif ($request->isRejected())
-                                            <span class="inline-flex items-center gap-1.5 rounded-full bg-rose-100 px-2.5 py-1 text-xs font-semibold text-rose-800 dark:bg-rose-900/30 dark:text-rose-300">
-                                                <svg class="h-3 w-3 text-rose-600" fill="currentColor" viewBox="0 0 20 20"><path d="M6.28 5.22a.75.75 0 0 0-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 1 0 1.06 1.06L10 11.06l3.72 3.72a.75.75 0 1 0 1.06-1.06L11.06 10l3.72-3.72a.75.75 0 0 0-1.06-1.06L10 8.94 6.28 5.22Z"/></svg>
-                                                {{ __('Rejected') }}
-                                            </span>
-                                        @endif
-                                    </td>
-<<<<<<< HEAD
-                                    <td class="whitespace-nowrap px-5 py-4">
-                                        @if ($request->isPending())
-                                            <div class="flex items-center gap-1.5">
-                                                {{-- View Details --}}
-                                                <button type="button"
-                                                    @click="$dispatch('open-details-modal', {
-                                                        request: {
-                                                            id: {{ $request->id }},
-                                                            date: '{{ $request->created_at->format('F d, Y \a\t h:i A') }}',
-                                                            requester: {{ json_encode($request->requester->name) }},
-                                                            project_code: {{ json_encode($request->project->project_code) }},
-                                                            project_name: {{ json_encode($request->project->project_name) }},
-                                                            material_name: {{ json_encode($request->material->material_name) }},
-                                                            material_description: {{ json_encode($request->material->material_description ?? '') }},
-                                                            quantity: {{ $request->quantity }},
-                                                            unit: {{ json_encode($request->material->unitOfMeasure?->name ?? __('units')) }},
-                                                            available_qty: {{ $request->material->quantity }},
-                                                            description: {{ json_encode($request->description ?? '') }},
-                                                            employee_file: {{ json_encode($request->employee_file ? asset('storage/' . $request->employee_file) : '') }},
-                                                            status: {{ json_encode($request->status) }},
-                                                            rejection_reason: {{ json_encode($request->rejection_reason ?? '') }},
-                                                            approver_name: {{ json_encode($request->approver?->name ?? '') }},
-                                                            approved_at: {{ json_encode($request->approved_at ? $request->approved_at->format('M d, Y \a\t h:i A') : '') }}
-                                                        }
-                                                    })"
-                                                    class="inline-flex items-center gap-1 rounded-lg bg-eec-600 px-2.5 py-1.5 text-xs font-semibold text-white shadow-sm hover:bg-eec-500 active:scale-95 transition-all focus:outline-none focus:ring-2 focus:ring-eec-500 focus:ring-offset-1 dark:focus:ring-offset-gray-900">
-                                                    <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178Z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"/></svg>
-                                                    {{ __('View') }}
-                                                </button>
-
-                                                {{-- Approve --}}
-                                                <form method="POST" action="{{ route('hse-officer.material-requests.approve', $request) }}" class="inline">
-                                                    @csrf
-                                                    <button type="submit"
-                                                        onclick="return confirm('{{ __('Approve this material request? This will deduct quantity from head office stock.') }}')"
-                                                        class="inline-flex items-center gap-1 rounded-lg bg-emerald-600 px-2.5 py-1.5 text-xs font-semibold text-white shadow-sm hover:bg-emerald-500 active:scale-95 transition-all focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-1 dark:focus:ring-offset-gray-900">
-                                                        <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5"/></svg>
-                                                        {{ __('Approve') }}
-                                                    </button>
-                                                </form>
-
-                                                {{-- Reject --}}
-                                                <button type="button"
-                                                    @click="$dispatch('open-reject-modal', { id: {{ $request->id }}, material: '{{ $request->material->material_name }}', requester: '{{ $request->requester->name }}' })"
-                                                    class="inline-flex items-center gap-1 rounded-lg bg-rose-600 px-2.5 py-1.5 text-xs font-semibold text-white shadow-sm hover:bg-rose-500 active:scale-95 transition-all focus:outline-none focus:ring-2 focus:ring-rose-500 focus:ring-offset-1 dark:focus:ring-offset-gray-900">
-                                                    <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12"/></svg>
-                                                    {{ __('Reject') }}
-                                                </button>
-                                            </div>
-                                        @else
-                                            <div class="flex items-center gap-2">
-                                                <button type="button"
-                                                    @click="$dispatch('open-details-modal', {
-                                                        request: {
-                                                            id: {{ $request->id }},
-                                                            date: '{{ $request->created_at->format('F d, Y \a\t h:i A') }}',
-                                                            requester: {{ json_encode($request->requester->name) }},
-                                                            project_code: {{ json_encode($request->project->project_code) }},
-                                                            project_name: {{ json_encode($request->project->project_name) }},
-                                                            material_name: {{ json_encode($request->material->material_name) }},
-                                                            material_description: {{ json_encode($request->material->material_description ?? '') }},
-                                                            quantity: {{ $request->quantity }},
-                                                            unit: {{ json_encode($request->material->unitOfMeasure?->name ?? __('units')) }},
-                                                            available_qty: {{ $request->material->quantity }},
-                                                            description: {{ json_encode($request->description ?? '') }},
-                                                            employee_file: {{ json_encode($request->employee_file ? asset('storage/' . $request->employee_file) : '') }},
-                                                            status: {{ json_encode($request->status) }},
-                                                            rejection_reason: {{ json_encode($request->rejection_reason ?? '') }},
-                                                            approver_name: {{ json_encode($request->approver?->name ?? '') }},
-                                                            approved_at: {{ json_encode($request->approved_at ? $request->approved_at->format('M d, Y \a\t h:i A') : '') }}
-                                                        }
-                                                    })"
-                                                    class="inline-flex items-center gap-1 rounded-lg border border-gray-300 bg-white px-2.5 py-1.5 text-xs font-medium text-gray-700 shadow-sm hover:bg-gray-50 active:scale-95 transition-all dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700">
-                                                    <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178Z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"/></svg>
-                                                    {{ __('View') }}
-                                                </button>
-                                                @if ($request->isRejected() && $request->rejection_reason)
-                                                    <span class="max-w-[120px] truncate text-xs text-rose-600 dark:text-rose-400" title="{{ $request->rejection_reason }}">
-                                                        {{ Str::limit($request->rejection_reason, 20) }}
-                                                    </span>
-                                                @elseif ($request->isApproved())
-                                                    <span class="text-xs text-gray-400 dark:text-gray-500">
-                                                        {{ $request->approver?->name ?? '—' }}
-                                                    </span>
-                                                @endif
-                                            </div>
-                                        @endif
-=======
-                                    <td class="whitespace-nowrap px-6 py-4 text-sm">
-                                        <div class="flex items-center gap-2">
-                                            <a href="{{ route('hse-officer.material-requests.show', $request) }}" class="inline-flex items-center rounded-md bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white shadow-sm hover:bg-indigo-500">
-                                                {{ __('View') }}
-                                            </a>
-                                            @if ($request->isPending())
-                                                <form method="POST" action="{{ route('hse-officer.material-requests.approve', $request) }}" class="inline">
-                                                    @csrf
-                                                    <button type="submit" class="inline-flex items-center rounded-md bg-green-600 px-3 py-1.5 text-xs font-semibold text-white shadow-sm hover:bg-green-500"
-                                                        onclick="return confirm('{{ __('Approve this material request? This will deduct quantity from head office stock.') }}')">
-                                                        {{ __('Approve') }}
-                                                    </button>
-                                                </form>
-                                                <button type="button" @click="$dispatch('open-reject-modal', { id: {{ $request->id }}, material: '{{ $request->material->material_name }}', requester: '{{ $request->requester->name }}' })"
-                                                    class="inline-flex items-center rounded-md bg-red-600 px-3 py-1.5 text-xs font-semibold text-white shadow-sm hover:bg-red-500">
-                                                    {{ __('Reject') }}
-                                                </button>
-                                            @endif
-                                        </div>
->>>>>>> 92683a169498c61dae9e5be240231f1e2eb13465
+                                    <td class="whitespace-nowrap px-5 py-4 text-right text-sm">
+                                        <a href="{{ route('hse-officer.material-requests.show', $materialRequest) }}" class="font-medium text-cyan-700 hover:text-cyan-600 dark:text-cyan-300">
+                                            {{ __('View') }}
+                                        </a>
                                     </td>
                                 </tr>
                             @endforeach
                         </tbody>
                     </table>
                 </div>
-            </div>
-        @endif
-    </div>
-
-    {{-- ═══════════════════════════════════════════════════════ --}}
-    {{-- DETAILS MODAL                                          --}}
-    {{-- ═══════════════════════════════════════════════════════ --}}
-    <div
-        x-data="{ open: false, request: {}, showRejectForm: false }"
-        x-on:open-details-modal.window="open = true; request = $event.detail.request; showRejectForm = false"
-        x-show="open"
-        x-cloak
-        class="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4 overflow-y-auto"
-        style="background: rgba(0,0,0,0.65); backdrop-filter: blur(4px);"
-        @keydown.escape.window="open = false"
-    >
-        <div
-            class="w-full max-w-2xl rounded-2xl bg-white dark:bg-gray-900 shadow-2xl overflow-hidden animate-slide-in-up"
-            @click.outside="open = false"
-        >
-            {{-- Modal gradient header --}}
-            <div class="eec-gradient px-6 py-5">
-                <div class="flex items-start justify-between">
-                    <div>
-                        <h3 class="text-base font-bold text-white">{{ __('Material Request Details') }}</h3>
-                        <p class="mt-0.5 text-xs text-cyan-100/80">
-                            {{ __('Submitted on') }} <span x-text="request.date"></span>
-                        </p>
-                    </div>
-                    <button type="button" @click="open = false"
-                        class="flex h-8 w-8 items-center justify-center rounded-lg bg-white/10 text-white hover:bg-white/20 transition-colors">
-                        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12"/>
-                        </svg>
-                    </button>
-                </div>
-            </div>
-
-            {{-- Modal body --}}
-            <div class="p-6 space-y-5 text-sm text-gray-700 dark:text-gray-300">
-
-                {{-- Info Grid --}}
-                <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
-                    <div class="rounded-xl bg-gray-50 dark:bg-gray-800 p-4">
-                        <p class="text-[10px] font-semibold uppercase tracking-wider text-gray-400 mb-1">{{ __('Requested By') }}</p>
-                        <div class="flex items-center gap-2">
-                            <span class="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-eec-500 to-teal-600 text-[10px] font-bold text-white">
-                                <span x-text="request.requester ? request.requester[0].toUpperCase() : '?'"></span>
-                            </span>
-                            <span class="font-semibold text-gray-900 dark:text-white" x-text="request.requester"></span>
-                        </div>
-                    </div>
-                    <div class="rounded-xl bg-gray-50 dark:bg-gray-800 p-4">
-                        <p class="text-[10px] font-semibold uppercase tracking-wider text-gray-400 mb-1">{{ __('Project / Site') }}</p>
-                        <p class="font-semibold text-gray-900 dark:text-white">
-                            <span x-text="request.project_code"></span>
-                            <span class="font-normal text-gray-500 dark:text-gray-400"> — </span>
-                            <span class="font-normal" x-text="request.project_name"></span>
-                        </p>
-                    </div>
-                    <div class="rounded-xl bg-gray-50 dark:bg-gray-800 p-4">
-                        <p class="text-[10px] font-semibold uppercase tracking-wider text-gray-400 mb-1">{{ __('Material') }}</p>
-                        <p class="font-semibold text-gray-900 dark:text-white" x-text="request.material_name"></p>
-                        <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5" x-text="request.material_description" x-show="request.material_description"></p>
-                    </div>
-                    <div class="rounded-xl bg-gray-50 dark:bg-gray-800 p-4">
-                        <p class="text-[10px] font-semibold uppercase tracking-wider text-gray-400 mb-1">{{ __('Quantity & Stock') }}</p>
-                        <div class="flex flex-wrap items-center gap-2 mt-1">
-                            <span class="inline-flex items-center gap-1 rounded-full bg-eec-100 px-3 py-0.5 text-xs font-semibold text-eec-800 dark:bg-eec-900/30 dark:text-eec-300">
-                                <span x-text="request.quantity"></span> <span x-text="request.unit"></span>
-                            </span>
-                            <span class="text-xs text-gray-500 dark:text-gray-400">
-                                ({{ __('HO Stock:') }} <span class="font-semibold" x-text="request.available_qty"></span>)
-                            </span>
-                        </div>
-                    </div>
-                </div>
-
-                {{-- Justification --}}
-                <div>
-                    <p class="text-[10px] font-semibold uppercase tracking-wider text-gray-400 mb-2">{{ __('Justification') }}</p>
-                    <div class="rounded-xl bg-gray-50 dark:bg-gray-800 p-4 text-sm text-gray-800 dark:text-gray-200 whitespace-pre-line min-h-[60px]"
-                         x-text="request.description || '{{ __('No description provided.') }}'">
-                    </div>
-                </div>
-
-                {{-- Employee File --}}
-                <div x-show="request.employee_file">
-                    <p class="text-[10px] font-semibold uppercase tracking-wider text-gray-400 mb-2">{{ __('Attached Employee List') }}</p>
-                    <a :href="request.employee_file" target="_blank"
-                       class="inline-flex items-center gap-2 rounded-xl bg-indigo-50 px-4 py-2.5 text-xs font-semibold text-indigo-700 hover:bg-indigo-100 transition-colors dark:bg-indigo-900/30 dark:text-indigo-300">
-                        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
-                        </svg>
-                        {{ __('Download Employee Excel File') }}
-                    </a>
-                </div>
-
-                {{-- Status Info (Approved / Rejected) --}}
-                <div x-show="request.status !== 'pending'">
-                    <div x-show="request.status === 'approved'"
-                         class="flex items-start gap-3 rounded-xl bg-emerald-50 border border-emerald-200 dark:bg-emerald-950/20 dark:border-emerald-800 p-4">
-                        <svg class="h-5 w-5 shrink-0 text-emerald-600 dark:text-emerald-400 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                        </svg>
-                        <div>
-                            <p class="text-sm font-semibold text-emerald-800 dark:text-emerald-300">{{ __('Request Approved') }}</p>
-                            <p class="text-xs text-emerald-700 dark:text-emerald-400 mt-0.5">
-                                {{ __('Approved by') }} <strong x-text="request.approver_name"></strong> {{ __('on') }} <span x-text="request.approved_at"></span>
-                            </p>
-                        </div>
-                    </div>
-                    <div x-show="request.status === 'rejected'"
-                         class="flex items-start gap-3 rounded-xl bg-rose-50 border border-rose-200 dark:bg-rose-950/20 dark:border-rose-800 p-4">
-                        <svg class="h-5 w-5 shrink-0 text-rose-600 dark:text-rose-400 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                        </svg>
-                        <div>
-                            <p class="text-sm font-semibold text-rose-800 dark:text-rose-300">{{ __('Request Rejected') }}</p>
-                            <p class="text-xs text-rose-700 dark:text-rose-400 mt-0.5">
-                                {{ __('by') }} <strong x-text="request.approver_name"></strong> {{ __('on') }} <span x-text="request.approved_at"></span>
-                            </p>
-                            <p class="text-xs text-rose-800 dark:text-rose-300 mt-2 font-medium">
-                                {{ __('Reason:') }} <span x-text="request.rejection_reason" class="font-normal"></span>
-                            </p>
-                        </div>
-                    </div>
-                </div>
-
-                {{-- Decision Panel (Pending only) --}}
-                <div x-show="request.status === 'pending'" class="border-t border-gray-100 dark:border-gray-800 pt-4">
-                    <div x-show="! showRejectForm" class="flex items-center justify-between gap-4">
-                        <p class="text-xs text-gray-500 dark:text-gray-400">{{ __('Verify head office stock before approving.') }}</p>
-                        <div class="flex gap-2 shrink-0">
-                            <button type="button" @click="open = false"
-                                class="inline-flex items-center rounded-xl border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700 transition-all">
-                                {{ __('Cancel') }}
-                            </button>
-                            <button type="button" @click="showRejectForm = true"
-                                class="inline-flex items-center rounded-xl bg-rose-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-rose-500 focus:ring-2 focus:ring-rose-500 transition-all">
-                                {{ __('Reject') }}
-                            </button>
-                            <form method="POST" :action="'{{ route('hse-officer.material-requests.approve', ['materialRequest' => '__ID__']) }}'.replace('__ID__', request.id)" class="inline">
-                                @csrf
-                                <button type="submit"
-                                    onclick="return confirm('{{ __('Approve this material request? This will deduct quantity from head office stock.') }}')"
-                                    class="inline-flex items-center rounded-xl bg-emerald-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-emerald-500 focus:ring-2 focus:ring-emerald-500 transition-all">
-                                    {{ __('Approve') }}
-                                </button>
-                            </form>
-                        </div>
-                    </div>
-
-                    {{-- Inline rejection form --}}
-                    <div x-show="showRejectForm" x-cloak class="space-y-4">
-                        <form method="POST" :action="'{{ route('hse-officer.material-requests.reject', ['materialRequest' => '__ID__']) }}'.replace('__ID__', request.id)">
-                            @csrf
-                            <div>
-                                <label for="modal_rejection_reason" class="block text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-1.5">
-                                    {{ __('Rejection Reason') }}
-                                </label>
-                                <textarea
-                                    id="modal_rejection_reason"
-                                    name="rejection_reason"
-                                    rows="3"
-                                    required
-                                    placeholder="{{ __('Provide a clear reason for rejection...') }}"
-                                    class="eec-input resize-none"
-                                ></textarea>
-                            </div>
-                            <div class="flex justify-end gap-2 mt-3">
-                                <button type="button" @click="showRejectForm = false"
-                                    class="inline-flex items-center rounded-xl border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700 transition-all">
-                                    {{ __('Back') }}
-                                </button>
-                                <button type="submit"
-                                    class="inline-flex items-center rounded-xl bg-rose-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-rose-500 focus:ring-2 focus:ring-rose-500 transition-all">
-                                    {{ __('Reject Request') }}
-                                </button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-            </div>
+            @endif
         </div>
     </div>
-
-    {{-- ═══════════════════════════════════════════════════════ --}}
-    {{-- QUICK REJECT MODAL                                     --}}
-    {{-- ═══════════════════════════════════════════════════════ --}}
-    <div
-        x-data="{ open: false, requestId: null, material: '', requester: '' }"
-        x-on:open-reject-modal.window="open = true; requestId = $event.detail.id; material = $event.detail.material; requester = $event.detail.requester"
-        x-show="open"
-        x-cloak
-        class="fixed inset-0 z-50 flex items-center justify-center p-4"
-        style="background: rgba(0,0,0,0.65); backdrop-filter: blur(4px);"
-        @keydown.escape.window="open = false"
-    >
-        <div class="w-full max-w-md rounded-2xl bg-white dark:bg-gray-900 shadow-2xl overflow-hidden animate-slide-in-up" @click.outside="open = false">
-
-            {{-- Header --}}
-            <div class="flex items-center gap-3 border-b border-rose-100 bg-rose-50 dark:border-rose-900/50 dark:bg-rose-950/30 px-6 py-4">
-                <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-rose-100 dark:bg-rose-900/50">
-                    <svg class="h-5 w-5 text-rose-600 dark:text-rose-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126z"/>
-                    </svg>
-                </div>
-                <div>
-                    <h3 class="text-sm font-bold text-rose-900 dark:text-rose-200">{{ __('Reject Material Request') }}</h3>
-                    <p class="text-xs text-rose-600 dark:text-rose-400">
-                        <span x-text="requester"></span> — <span x-text="material"></span>
-                    </p>
-                </div>
-            </div>
-
-            <div class="px-6 py-5">
-                <form method="POST" :action="'{{ route('hse-officer.material-requests.reject', ['materialRequest' => '__ID__']) }}'.replace('__ID__', requestId)" class="space-y-4">
-                    @csrf
-                    <div>
-                        <label for="rejection_reason" class="block text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-1.5">
-                            {{ __('Rejection Reason') }}
-                        </label>
-                        <textarea
-                            id="rejection_reason"
-                            name="rejection_reason"
-                            rows="4"
-                            required
-                            placeholder="{{ __('Provide a clear reason for rejection...') }}"
-                            class="eec-input resize-none"
-                        ></textarea>
-                    </div>
-                    <div class="flex items-center justify-end gap-2 pt-1">
-                        <button type="button" @click="open = false"
-                            class="inline-flex items-center rounded-xl border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700 transition-all">
-                            {{ __('Cancel') }}
-                        </button>
-                        <button type="submit"
-                            class="inline-flex items-center gap-1.5 rounded-xl bg-rose-600 px-5 py-2 text-sm font-semibold text-white shadow-sm hover:bg-rose-500 focus:ring-2 focus:ring-rose-500 transition-all">
-                            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12"/></svg>
-                            {{ __('Reject Request') }}
-                        </button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
-
 </x-app-layout>
