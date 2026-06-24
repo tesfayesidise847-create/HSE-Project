@@ -45,11 +45,7 @@ class MaterialHistoryController extends Controller
             }
         }
 
-        if (! $hasFilter) {
-            $histories = $query->take(10)->get();
-        } else {
-            $histories = $query->paginate(10)->withQueryString();
-        }
+        $histories = $query->paginate(15)->withQueryString();
 
         $materials = Material::with('histories')
             ->orderBy('material_name')

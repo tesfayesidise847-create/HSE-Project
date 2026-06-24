@@ -69,7 +69,7 @@ it('exports material history to excel and pdf', function () {
         ->assertHeaderContains('content-type', 'application/pdf');
 });
 
-it('displays maximum of 10 rows by default without filters', function () {
+it('paginates 15 rows per page by default without filters', function () {
     $uom = UnitOfMeasure::firstOrCreate(['name' => 'Pcs']);
     $officer = User::factory()->create();
     $officer->assignRole('HSE Officer');
@@ -81,7 +81,7 @@ it('displays maximum of 10 rows by default without filters', function () {
         'unit_of_measure_id' => $uom->id,
     ]);
 
-    for ($i = 0; $i < 15; $i++) {
+    for ($i = 0; $i < 20; $i++) {
         MaterialHistory::create([
             'material_id' => $material->id,
             'event_type' => 'stock_added',
@@ -98,7 +98,8 @@ it('displays maximum of 10 rows by default without filters', function () {
         ->assertOk();
 
     $histories = $response->viewData('histories');
-    expect(count($histories))->toBe(10);
+    expect(count($histories))->toBe(15);
+    expect($histories->total())->toBe(20);
 });
 
 it('filters material history by date', function () {

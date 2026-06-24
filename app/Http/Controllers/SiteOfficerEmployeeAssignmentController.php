@@ -8,6 +8,7 @@ use App\Models\MaterialEmployeeAssignment;
 use App\Models\Project;
 use App\Services\WorkflowNotificationService;
 use App\SiteMaterialBalanceService;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -15,6 +16,10 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Redirect;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Writer\Xls;
+use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class SiteOfficerEmployeeAssignmentController extends Controller
 {
@@ -228,6 +233,98 @@ class SiteOfficerEmployeeAssignmentController extends Controller
                 'job_title' => $employee->job_title,
             ],
             'assignments' => $assignments,
+        ]);
+    }
+
+    public function export(Request $request): Response
+    {
+        $format = strtolower($request->query('format', 'xlsx'));
+
+        $projectIds = Project::query()
+            ->when(! $request->user()->hasAnyRole(['Admin', 'HSE Officer']), function ($query) use ($request) {
+                return $query->where('site_officer_id', $request->user()->id);
+            })
+            ->pluck('id');
+
+        $assignmentsQuery = MaterialEmployeeAssignment::query()
+            ->whereIn('project_id', $projectIds)
+            ->with(['material', 'project', 'employee']);
+
+        if ($request->filled('search')) {
+            $search = $request->get('search');
+            $assignmentsQuery->where(function ($query) use ($search): void {
+                $query
+                    ->whereHas('material', function ($materialQuery) use ($search): void {
+                        $materialQuery->where('material_name', 'like', "%{$search}%");
+                    })
+                    ->orWhereHas('employee', function ($employeeQuery) use ($search): void {
+                        $employeeQuery
+                            ->where('first_name', 'like', "%{$search}%")
+                            ->orWhere('last_name', 'like', "%{$search}%");
+                    });
+            });
+        }
+
+        if ($request->filled('project_id')) {
+            $assignmentsQuery->where('project_id', $request->get('project_id'));
+        }
+
+        if ($request->filled('from_date')) {
+            $assignmentsQuery->whereDate('assigned_date', '>=', $request->get('from_date'));
+        }
+        if ($request->filled('to_date')) {
+            $assignmentsQuery->whereDate('assigned_date', '<=', $request->get('to_date'));
+        }
+
+        if ($request->filled('quarter')) {
+            $quarter = (int) $request->get('quarter');
+            $assignmentsQuery
+                ->whereMonth('assigned_date', '>=', (($quarter - 1) * 3) + 1)
+                ->whereMonth('assigned_date', '<=', $quarter * 3);
+        }
+
+        $assignments = $assignmentsQuery->latest()->get();
+
+        if ($format === 'pdf') {
+            $pdf = Pdf::loadView('site-officer.employee-assignments.exports.assignment-pdf', [
+                'assignments' => $assignments,
+                'title' => 'Employee Assignment History Report',
+            ]);
+
+            return $pdf->download('employee_assignment_history.pdf');
+        }
+
+        $spreadsheet = new Spreadsheet;
+        $sheet = $spreadsheet->getActiveSheet();
+        $sheet->setTitle('Employee Assignments');
+
+        $sheet->fromArray([
+            ['Date', 'Project Code', 'Project Name', 'Material', 'Quantity', 'Employee Name', 'Employee Job Title'],
+        ], null, 'A1');
+
+        $row = 2;
+        foreach ($assignments as $assignment) {
+            $sheet->fromArray([
+                $assignment->assigned_date->format('Y-m-d'),
+                $assignment->project->project_code,
+                $assignment->project->project_name,
+                $assignment->material->material_name,
+                $assignment->quantity,
+                $assignment->employee->first_name.' '.$assignment->employee->last_name,
+                $assignment->employee->job_title,
+            ], null, "A{$row}");
+            $row++;
+        }
+
+        $sheet->getStyle('A1:G1')->getFont()->setBold(true);
+
+        return new StreamedResponse(function () use ($spreadsheet): void {
+            $writer = new Xls($spreadsheet);
+            $writer->save('php://output');
+        }, 200, [
+            'Content-Type' => 'application/vnd.ms-excel',
+            'Content-Disposition' => 'attachment; filename="employee_assignment_history.xls"',
+            'Cache-Control' => 'max-age=0',
         ]);
     }
 }

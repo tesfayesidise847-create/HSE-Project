@@ -7,10 +7,15 @@ use App\Models\Material;
 use App\Models\MaterialEmployeeAssignment;
 use App\Models\MaterialProjectAssignment;
 use App\Models\Project;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
 use Illuminate\View\View;
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Writer\Xls;
+use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class MaterialReportController extends Controller
 {
@@ -386,5 +391,402 @@ class MaterialReportController extends Controller
                     ->values();
             })
             ->all();
+    }
+
+    public function exportHeadOffice(Request $request): Response
+    {
+        $format = strtolower($request->query('format', 'xlsx'));
+
+        $query = Material::with('unitOfMeasure')
+            ->orderBy('material_name');
+
+        if ($request->filled('search')) {
+            $search = $request->get('search');
+            $query->where('material_name', 'like', "%{$search}%");
+        }
+
+        $materials = $query->get()
+            ->map(function (Material $material) use ($request) {
+                $assignmentsQuery = MaterialProjectAssignment::query()
+                    ->where('material_id', $material->id);
+
+                if ($request->filled('from_date')) {
+                    $assignmentsQuery->whereDate('created_at', '>=', $request->get('from_date'));
+                }
+                if ($request->filled('to_date')) {
+                    $assignmentsQuery->whereDate('created_at', '<=', $request->get('to_date'));
+                }
+
+                if ($request->filled('quarter')) {
+                    $quarter = (int) $request->get('quarter');
+                    $assignmentsQuery
+                        ->whereMonth('created_at', '>=', (($quarter - 1) * 3) + 1)
+                        ->whereMonth('created_at', '<=', $quarter * 3);
+                }
+
+                if ($request->filled('project_id')) {
+                    $assignmentsQuery->where('project_id', $request->get('project_id'));
+                }
+
+                $totalDistributed = $assignmentsQuery->sum('quantity');
+                $physicalBalance = $material->quantity - $totalDistributed;
+
+                return [
+                    'material_name' => $material->material_name,
+                    'unit_of_measure' => $material->unitOfMeasure?->name ?? '—',
+                    'opening_stock' => $material->quantity,
+                    'total_distributed' => $totalDistributed,
+                    'physical_available' => max(0, $physicalBalance),
+                ];
+            })
+            ->values();
+
+        if ($format === 'pdf') {
+            $pdf = Pdf::loadView('material-reports.exports.head-office-pdf', [
+                'materials' => $materials,
+                'title' => 'Head Office Material Report',
+            ]);
+
+            return $pdf->download('head_office_material_report.pdf');
+        }
+
+        $spreadsheet = new Spreadsheet;
+        $sheet = $spreadsheet->getActiveSheet();
+        $sheet->setTitle('Head Office Report');
+
+        $sheet->fromArray([
+            ['Material Name', 'Unit of Measurement', 'Opening Stock', 'Total Distributed', 'Physical Available'],
+        ], null, 'A1');
+
+        $row = 2;
+        foreach ($materials as $material) {
+            $sheet->fromArray([
+                $material['material_name'],
+                $material['unit_of_measure'],
+                $material['opening_stock'],
+                $material['total_distributed'],
+                $material['physical_available'],
+            ], null, "A{$row}");
+            $row++;
+        }
+
+        $sheet->getStyle('A1:E1')->getFont()->setBold(true);
+
+        return new StreamedResponse(function () use ($spreadsheet): void {
+            $writer = new Xls($spreadsheet);
+            $writer->save('php://output');
+        }, 200, [
+            'Content-Type' => 'application/vnd.ms-excel',
+            'Content-Disposition' => 'attachment; filename="head_office_material_report.xls"',
+            'Cache-Control' => 'max-age=0',
+        ]);
+    }
+
+    public function exportSite(Request $request): Response
+    {
+        $format = strtolower($request->query('format', 'xlsx'));
+
+        $projects = Project::with('siteOfficer')
+            ->orderBy('project_name')
+            ->get();
+
+        if ($request->filled('project_id')) {
+            $projects = $projects->where('id', $request->get('project_id'));
+        }
+
+        $reportData = [];
+
+        foreach ($projects as $project) {
+            $projectAssignmentsQuery = MaterialProjectAssignment::query()
+                ->where('project_id', $project->id)
+                ->with('material.unitOfMeasure');
+
+            if ($request->filled('from_date')) {
+                $projectAssignmentsQuery->whereDate('created_at', '>=', $request->get('from_date'));
+            }
+            if ($request->filled('to_date')) {
+                $projectAssignmentsQuery->whereDate('created_at', '<=', $request->get('to_date'));
+            }
+
+            if ($request->filled('quarter')) {
+                $quarter = (int) $request->get('quarter');
+                $projectAssignmentsQuery
+                    ->whereMonth('created_at', '>=', (($quarter - 1) * 3) + 1)
+                    ->whereMonth('created_at', '<=', $quarter * 3);
+            }
+
+            $projectAssignments = $projectAssignmentsQuery->get();
+
+            foreach ($projectAssignments as $assignment) {
+                if ($request->filled('search')) {
+                    $search = strtolower($request->get('search'));
+                    $materialName = strtolower($assignment->material->material_name);
+                    if (strpos($materialName, $search) === false) {
+                        continue;
+                    }
+                }
+
+                $employeeDistributedQuery = MaterialEmployeeAssignment::query()
+                    ->where('project_id', $project->id)
+                    ->where('material_id', $assignment->material_id);
+
+                if ($request->filled('from_date')) {
+                    $employeeDistributedQuery->whereDate('assigned_date', '>=', $request->get('from_date'));
+                }
+                if ($request->filled('to_date')) {
+                    $employeeDistributedQuery->whereDate('assigned_date', '<=', $request->get('to_date'));
+                }
+
+                if ($request->filled('quarter')) {
+                    $quarter = (int) $request->get('quarter');
+                    $employeeDistributedQuery
+                        ->whereMonth('assigned_date', '>=', (($quarter - 1) * 3) + 1)
+                        ->whereMonth('assigned_date', '<=', $quarter * 3);
+                }
+
+                $employeeDistributed = $employeeDistributedQuery->sum('quantity');
+                $physicalBalance = $assignment->quantity - $employeeDistributed;
+
+                $reportData[] = [
+                    'material_name' => $assignment->material->material_name,
+                    'unit_of_measure' => $assignment->material->unitOfMeasure?->name ?? '—',
+                    'project_name' => $project->project_name,
+                    'project_code' => $project->project_code,
+                    'assigned_count' => $assignment->quantity,
+                    'distributed_to_employee' => $employeeDistributed,
+                    'physical_available' => max(0, $physicalBalance),
+                ];
+            }
+        }
+
+        if ($format === 'pdf') {
+            $pdf = Pdf::loadView('material-reports.exports.site-pdf', [
+                'materials' => $reportData,
+                'title' => 'Site Material Reports',
+            ]);
+
+            return $pdf->download('site_material_report.pdf');
+        }
+
+        $spreadsheet = new Spreadsheet;
+        $sheet = $spreadsheet->getActiveSheet();
+        $sheet->setTitle('Site Material Reports');
+
+        $sheet->fromArray([
+            ['Material Name', 'Unit of Measurement', 'Project Name', 'Project Code', 'Assigned Count', 'Distributed to Employee', 'Physical Available'],
+        ], null, 'A1');
+
+        $row = 2;
+        foreach ($reportData as $material) {
+            $sheet->fromArray([
+                $material['material_name'],
+                $material['unit_of_measure'],
+                $material['project_name'],
+                $material['project_code'],
+                $material['assigned_count'],
+                $material['distributed_to_employee'],
+                $material['physical_available'],
+            ], null, "A{$row}");
+            $row++;
+        }
+
+        $sheet->getStyle('A1:G1')->getFont()->setBold(true);
+
+        return new StreamedResponse(function () use ($spreadsheet): void {
+            $writer = new Xls($spreadsheet);
+            $writer->save('php://output');
+        }, 200, [
+            'Content-Type' => 'application/vnd.ms-excel',
+            'Content-Disposition' => 'attachment; filename="site_material_report.xls"',
+            'Cache-Control' => 'max-age=0',
+        ]);
+    }
+
+    public function exportInventory(Request $request): Response
+    {
+        $format = strtolower($request->query('format', 'xlsx'));
+
+        $report = $this->inventoryReport->forHeadOffice(
+            search: $request->get('search'),
+            fromDate: $request->get('from_date'),
+            toDate: $request->get('to_date'),
+            quarter: $request->get('quarter'),
+            projectId: $request->get('project_id'),
+        );
+
+        $materials = $report['materials'];
+
+        if ($format === 'pdf') {
+            $pdf = Pdf::loadView('material-reports.exports.inventory-pdf', [
+                'materials' => $materials,
+                'summary' => $report['summary'],
+                'title' => 'Head Office Material Inventory Report',
+            ]);
+
+            return $pdf->download('inventory_report.pdf');
+        }
+
+        $spreadsheet = new Spreadsheet;
+        $sheet = $spreadsheet->getActiveSheet();
+        $sheet->setTitle('Inventory Report');
+
+        $summary = $report['summary'];
+        $sheet->fromArray([
+            ['Head Office Material Inventory Summary'],
+            ['Total Materials', $summary['total_materials']],
+            ['Total Stocked Quantity', $summary['total_stocked_quantity']],
+            ['Total HO Available', $summary['total_head_office_available']],
+            ['Total Assigned to Projects', $summary['total_assigned_to_projects']],
+            ['Total Assigned to Employees', $summary['total_assigned_to_employees']],
+            ['Total Site Remaining', $summary['total_site_remaining']],
+            ['Total in System', $summary['total_in_system']],
+            [], // empty row
+            ['Material', 'Description', 'Unit of Measure', 'Opening Stock', 'Physical Balance', 'Assigned to Sites', 'Available Balance', 'Total in System'],
+        ], null, 'A1');
+
+        $row = 11;
+        foreach ($materials as $material) {
+            $sheet->fromArray([
+                $material['name'],
+                $material['description'],
+                $material['unit_of_measure'] ?? '—',
+                $material['opening_stock'],
+                $material['physical_balance'] ?? 0,
+                $material['assigned_to_sites'],
+                $material['site_remaining'],
+                $material['total_in_system'],
+            ], null, "A{$row}");
+            $row++;
+        }
+
+        $sheet->getStyle('A1')->getFont()->setBold(true)->setSize(14);
+        $sheet->getStyle('A2:A8')->getFont()->setBold(true);
+        $sheet->getStyle('A10:H10')->getFont()->setBold(true);
+
+        return new StreamedResponse(function () use ($spreadsheet): void {
+            $writer = new Xls($spreadsheet);
+            $writer->save('php://output');
+        }, 200, [
+            'Content-Type' => 'application/vnd.ms-excel',
+            'Content-Disposition' => 'attachment; filename="inventory_report.xls"',
+            'Cache-Control' => 'max-age=0',
+        ]);
+    }
+
+    public function exportBalance(Request $request): Response
+    {
+        $format = strtolower($request->query('format', 'xlsx'));
+        $materials = $this->getMaterialBalances();
+
+        if ($format === 'pdf') {
+            $pdf = Pdf::loadView('material-reports.exports.balance-pdf', [
+                'materials' => $materials,
+                'title' => 'Material Balance Report',
+            ]);
+
+            return $pdf->download('material_balance_report.pdf');
+        }
+
+        $spreadsheet = new Spreadsheet;
+        $sheet = $spreadsheet->getActiveSheet();
+        $sheet->setTitle('Material Balance');
+
+        $sheet->fromArray([
+            ['Material Name', 'Description', 'Unit of Measurement', 'Head Office Balance', 'On Sites Balance', 'Total Balance'],
+        ], null, 'A1');
+
+        $row = 2;
+        foreach ($materials as $material) {
+            $sheet->fromArray([
+                $material['name'],
+                $material['description'],
+                $material['unit_of_measure'] ?? '—',
+                $material['head_office_balance'],
+                $material['site_balance'],
+                $material['total_balance'],
+            ], null, "A{$row}");
+            $row++;
+        }
+
+        $sheet->getStyle('A1:F1')->getFont()->setBold(true);
+
+        return new StreamedResponse(function () use ($spreadsheet): void {
+            $writer = new Xls($spreadsheet);
+            $writer->save('php://output');
+        }, 200, [
+            'Content-Type' => 'application/vnd.ms-excel',
+            'Content-Disposition' => 'attachment; filename="material_balance_report.xls"',
+            'Cache-Control' => 'max-age=0',
+        ]);
+    }
+
+    public function exportProject(Request $request, Project $project): Response
+    {
+        $format = strtolower($request->query('format', 'xlsx'));
+        $project->load('siteOfficer');
+
+        $balances = MaterialProjectAssignment::query()
+            ->where('project_id', $project->id)
+            ->with(['material', 'receiver', 'assignedBy'])
+            ->latest()
+            ->get()
+            ->groupBy('material_id')
+            ->map(function (Collection $assignments): array {
+                $first = $assignments->first();
+
+                return [
+                    'material' => $first->material,
+                    'total_quantity' => $assignments->sum('quantity'),
+                    'assignments' => $assignments,
+                ];
+            })
+            ->values();
+
+        if ($format === 'pdf') {
+            $pdf = Pdf::loadView('material-reports.exports.project-pdf', [
+                'project' => $project,
+                'balances' => $balances,
+                'title' => "Project Material Balance Report - {$project->project_code}",
+            ]);
+
+            return $pdf->download("project_material_balance_{$project->project_code}.pdf");
+        }
+
+        $spreadsheet = new Spreadsheet;
+        $sheet = $spreadsheet->getActiveSheet();
+        $sheet->setTitle('Project Balance');
+
+        $sheet->fromArray([
+            ["Project Material Balance: {$project->project_code} - {$project->project_name}"],
+            ['Site Officer: '.($project->siteOfficer?->name ?? '—')],
+            [],
+            ['Material Name', 'Date Assigned', 'Quantity', 'Receiver', 'Assigned By'],
+        ], null, 'A1');
+
+        $row = 5;
+        foreach ($balances as $balance) {
+            foreach ($balance['assignments'] as $assignment) {
+                $sheet->fromArray([
+                    $balance['material']->material_name,
+                    $assignment->created_at->format('Y-m-d H:i'),
+                    $assignment->quantity,
+                    $assignment->receiver->name,
+                    $assignment->assignedBy->name,
+                ], null, "A{$row}");
+                $row++;
+            }
+        }
+
+        $sheet->getStyle('A1')->getFont()->setBold(true)->setSize(12);
+        $sheet->getStyle('A4:E4')->getFont()->setBold(true);
+
+        return new StreamedResponse(function () use ($spreadsheet): void {
+            $writer = new Xls($spreadsheet);
+            $writer->save('php://output');
+        }, 200, [
+            'Content-Type' => 'application/vnd.ms-excel',
+            'Content-Disposition' => 'attachment; filename="project_material_balance_'.$project->project_code.'.xls"',
+            'Cache-Control' => 'max-age=0',
+        ]);
     }
 }

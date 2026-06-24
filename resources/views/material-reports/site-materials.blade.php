@@ -5,6 +5,10 @@
                 <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">{{ __('Site Material Reports') }}</h2>
                 <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">{{ __('Material movement across projects and employees') }}</p>
             </div>
+            <div class="flex flex-wrap gap-2">
+                <a href="{{ route('material-reports.site.export', array_merge(request()->query(), ['format' => 'xlsx'])) }}" class="inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700">{{ __('Export Excel') }}</a>
+                <a href="{{ route('material-reports.site.export', array_merge(request()->query(), ['format' => 'pdf'])) }}" class="inline-flex items-center rounded-md bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-700">{{ __('Export PDF') }}</a>
+            </div>
         </div>
     </x-slot>
 

@@ -30,6 +30,15 @@ class HseOfficerMaterialRequestController extends Controller
         ]);
     }
 
+    public function show(Request $request, MaterialRequest $materialRequest): View
+    {
+        $materialRequest->load(['material', 'project', 'requester', 'approver']);
+
+        return view('hse-officer.material-requests.show', [
+            'request' => $materialRequest,
+        ]);
+    }
+
     public function approve(Request $request, MaterialRequest $materialRequest): RedirectResponse
     {
         if (! $materialRequest->isPending()) {
