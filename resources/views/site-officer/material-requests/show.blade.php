@@ -18,6 +18,8 @@
             <div class="rounded-xl p-6 shadow-sm
                 @if ($request->isPending())
                     bg-yellow-50 border border-yellow-200 dark:bg-yellow-900/20 dark:border-yellow-800
+                @elseif ($request->isPartiallyApproved())
+                    bg-blue-50 border border-blue-200 dark:bg-blue-900/20 dark:border-blue-800
                 @elseif ($request->isApproved())
                     bg-green-50 border border-green-200 dark:bg-green-900/20 dark:border-green-800
                 @elseif ($request->isRejected())
@@ -47,6 +49,8 @@
                         ">
                             @if ($request->isPending())
                                 {{ __('Request Pending Approval') }}
+                            @elseif ($request->isPartiallyApproved())
+                                {{ __('Request Partially Approved') }}
                             @elseif ($request->isApproved())
                                 {{ __('Request Approved') }}
                             @elseif ($request->isRejected())
@@ -61,6 +65,8 @@
                         ">
                             @if ($request->isPending())
                                 {{ __('Your request is awaiting review by an HSE Officer.') }}
+                            @elseif ($request->isPartiallyApproved())
+                                {{ __('Some employees are approved. Remaining employees are still pending.') }}
                             @elseif ($request->isApproved())
                                 {{ __('Approved by') }} {{ $request->approver?->name ?? '—' }} {{ __('on') }} {{ $request->approved_at?->format('M d, Y \a\t h:i A') ?? '—' }}
                             @elseif ($request->isRejected())
@@ -113,34 +119,39 @@
                 </div>
             </div>
 
-            {{-- Description / Justification --}}
             <div class="overflow-hidden rounded-xl bg-white shadow-sm dark:bg-gray-800">
                 <div class="border-b border-gray-200 px-6 py-4 dark:border-gray-700">
-                    <h3 class="text-base font-semibold text-gray-900 dark:text-gray-100">{{ __('Description / Justification') }}</h3>
+                    <h3 class="text-base font-semibold text-gray-900 dark:text-gray-100">{{ __('Employee requests') }}</h3>
                 </div>
                 <div class="p-6">
-                    <div class="prose prose-sm max-w-none text-gray-700 dark:text-gray-300">
-                        {{ $request->description ?: __('No description provided.') }}
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                            <thead class="bg-gray-50 dark:bg-gray-700">
+                                <tr>
+                                    <th class="px-4 py-2 text-left text-xs font-medium uppercase text-gray-500 dark:text-gray-300">{{ __('Employee') }}</th>
+                                    <th class="px-4 py-2 text-left text-xs font-medium uppercase text-gray-500 dark:text-gray-300">{{ __('Quantity') }}</th>
+                                    <th class="px-4 py-2 text-left text-xs font-medium uppercase text-gray-500 dark:text-gray-300">{{ __('Status') }}</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
+                                @foreach ($request->requestedEmployees as $requestedEmployee)
+                                    <tr>
+                                        <td class="px-4 py-2 text-sm text-gray-900 dark:text-gray-100">{{ $requestedEmployee->employee->fullName() }}</td>
+                                        <td class="px-4 py-2 text-sm text-gray-700 dark:text-gray-300">{{ $requestedEmployee->quantity }}</td>
+                                        <td class="px-4 py-2 text-sm">
+                                            @if ($requestedEmployee->isApproved())
+                                                <span class="inline-flex rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-800 dark:bg-green-900/30 dark:text-green-300">{{ __('Approved') }}</span>
+                                            @else
+                                                <span class="inline-flex rounded-full bg-yellow-100 px-2.5 py-0.5 text-xs font-medium text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300">{{ __('Pending') }}</span>
+                                            @endif
+                                        </td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
                     </div>
                 </div>
             </div>
-
-            {{-- Employee File --}}
-            @if ($request->employee_file)
-                <div class="overflow-hidden rounded-xl bg-white shadow-sm dark:bg-gray-800">
-                    <div class="border-b border-gray-200 px-6 py-4 dark:border-gray-700">
-                        <h3 class="text-base font-semibold text-gray-900 dark:text-gray-100">{{ __('Employee List') }}</h3>
-                    </div>
-                    <div class="p-6">
-                        <a href="{{ asset('storage/' . $request->employee_file) }}" target="_blank" class="inline-flex items-center gap-2 rounded-md bg-indigo-50 px-4 py-2 text-sm font-medium text-indigo-700 hover:bg-indigo-100 dark:bg-indigo-900/30 dark:text-indigo-300 dark:hover:bg-indigo-900/50">
-                            <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3" />
-                            </svg>
-                            {{ __('Download Employee Excel File') }}
-                        </a>
-                    </div>
-                </div>
-            @endif
 
             {{-- Rejection Reason --}}
             @if ($request->isRejected() && $request->rejection_reason)

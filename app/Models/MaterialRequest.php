@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class MaterialRequest extends Model
 {
@@ -54,6 +55,11 @@ class MaterialRequest extends Model
         return $this->belongsTo(User::class, 'approved_by');
     }
 
+    public function requestedEmployees(): HasMany
+    {
+        return $this->hasMany(MaterialRequestEmployee::class);
+    }
+
     public function isPending(): bool
     {
         return $this->status === 'pending';
@@ -62,6 +68,11 @@ class MaterialRequest extends Model
     public function isApproved(): bool
     {
         return $this->status === 'approved';
+    }
+
+    public function isPartiallyApproved(): bool
+    {
+        return $this->status === 'partial_approved';
     }
 
     public function isRejected(): bool

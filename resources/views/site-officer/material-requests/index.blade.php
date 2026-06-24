@@ -32,6 +32,7 @@
                     <select id="status" name="status" class="mt-1 block w-full rounded-md border-gray-300 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300">
                         <option value="">{{ __('All') }}</option>
                         <option value="pending" @selected(request('status') === 'pending')>{{ __('Pending') }}</option>
+                        <option value="partial_approved" @selected(request('status') === 'partial_approved')>{{ __('Partially Approved') }}</option>
                         <option value="approved" @selected(request('status') === 'approved')>{{ __('Approved') }}</option>
                         <option value="rejected" @selected(request('status') === 'rejected')>{{ __('Rejected') }}</option>
                     </select>
@@ -80,7 +81,7 @@
                                 <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-300">{{ __('Quantity') }}</th>
                                 <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-300">{{ __('Status') }}</th>
                                 <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-300">{{ __('Approved By') }}</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-300">{{ __('Employee File') }}</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-300">{{ __('Employees') }}</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-gray-200 bg-white dark:divide-gray-700 dark:bg-gray-800">
@@ -105,6 +106,10 @@
                                             <span class="inline-flex items-center rounded-full bg-yellow-100 px-2.5 py-0.5 text-xs font-medium text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300">
                                                 {{ __('Pending') }}
                                             </span>
+                                        @elseif ($request->isPartiallyApproved())
+                                            <span class="inline-flex items-center rounded-full bg-blue-100 px-2.5 py-0.5 text-xs font-medium text-blue-800 dark:bg-blue-900/30 dark:text-blue-300">
+                                                {{ __('Partially Approved') }}
+                                            </span>
                                         @elseif ($request->isApproved())
                                             <span class="inline-flex items-center rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-800 dark:bg-green-900/30 dark:text-green-300">
                                                 {{ __('Approved') }}
@@ -119,11 +124,7 @@
                                         {{ $request->approver?->name ?? '—' }}
                                     </td>
                                     <td class="whitespace-nowrap px-6 py-4 text-sm text-gray-500 dark:text-gray-400">
-                                        @if ($request->employee_file)
-                                            <a href="{{ asset('storage/' . $request->employee_file) }}" target="_blank" class="text-indigo-600 hover:text-indigo-500 dark:text-indigo-400">{{ __('Download') }}</a>
-                                        @else
-                                            —
-                                        @endif
+                                        {{ $request->requestedEmployees->count() }}
                                     </td>
                                 </tr>
                                 @if ($request->isRejected() && $request->rejection_reason)

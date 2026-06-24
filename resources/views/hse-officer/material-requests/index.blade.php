@@ -26,6 +26,7 @@
                     <select id="status" name="status" class="mt-1 block w-full rounded-md border-gray-300 text-sm shadow-sm focus:border-cyan-500 focus:ring-cyan-500 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100">
                         <option value="">{{ __('All') }}</option>
                         <option value="pending" @selected(request('status') === 'pending')>{{ __('Pending') }}</option>
+                        <option value="partial_approved" @selected(request('status') === 'partial_approved')>{{ __('Partially Approved') }}</option>
                         <option value="approved" @selected(request('status') === 'approved')>{{ __('Approved') }}</option>
                         <option value="rejected" @selected(request('status') === 'rejected')>{{ __('Rejected') }}</option>
                     </select>
@@ -82,7 +83,7 @@
                                 <th class="px-5 py-3 text-left text-xs font-semibold uppercase text-gray-500 dark:text-gray-400">{{ __('Project') }}</th>
                                 <th class="px-5 py-3 text-left text-xs font-semibold uppercase text-gray-500 dark:text-gray-400">{{ __('Material') }}</th>
                                 <th class="px-5 py-3 text-left text-xs font-semibold uppercase text-gray-500 dark:text-gray-400">{{ __('Qty') }}</th>
-                                <th class="px-5 py-3 text-left text-xs font-semibold uppercase text-gray-500 dark:text-gray-400">{{ __('Justification') }}</th>
+                                <th class="px-5 py-3 text-left text-xs font-semibold uppercase text-gray-500 dark:text-gray-400">{{ __('Employees') }}</th>
                                 <th class="px-5 py-3 text-left text-xs font-semibold uppercase text-gray-500 dark:text-gray-400">{{ __('Status') }}</th>
                                 <th class="px-5 py-3 text-right text-xs font-semibold uppercase text-gray-500 dark:text-gray-400">{{ __('Actions') }}</th>
                             </tr>
@@ -107,12 +108,14 @@
                                     <td class="whitespace-nowrap px-5 py-4 text-sm text-gray-600 dark:text-gray-300">
                                         {{ $materialRequest->quantity }}
                                     </td>
-                                    <td class="max-w-xs px-5 py-4 text-sm text-gray-600 dark:text-gray-300">
-                                        {{ $materialRequest->description ?: '-' }}
+                                    <td class="whitespace-nowrap px-5 py-4 text-sm text-gray-600 dark:text-gray-300">
+                                        {{ $materialRequest->requestedEmployees->count() }}
                                     </td>
                                     <td class="whitespace-nowrap px-5 py-4 text-sm">
                                         @if ($materialRequest->isPending())
                                             <span class="inline-flex rounded-full bg-amber-100 px-2.5 py-1 text-xs font-semibold text-amber-800 dark:bg-amber-900/30 dark:text-amber-300">{{ __('Pending') }}</span>
+                                        @elseif ($materialRequest->isPartiallyApproved())
+                                            <span class="inline-flex rounded-full bg-blue-100 px-2.5 py-1 text-xs font-semibold text-blue-800 dark:bg-blue-900/30 dark:text-blue-300">{{ __('Partially Approved') }}</span>
                                         @elseif ($materialRequest->isApproved())
                                             <span class="inline-flex rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-semibold text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300">{{ __('Approved') }}</span>
                                         @else
