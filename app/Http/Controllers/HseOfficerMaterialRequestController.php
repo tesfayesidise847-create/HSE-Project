@@ -2,8 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Employee;
-use App\Models\Material;
 use App\Models\MaterialProjectAssignment;
 use App\Models\MaterialRequest;
 use App\Models\Project;
@@ -20,13 +18,43 @@ class HseOfficerMaterialRequestController extends Controller
 {
     public function index(Request $request): View
     {
-        $requests = MaterialRequest::query()
-            ->with(['material', 'project', 'requester', 'approver'])
-            ->latest()
-            ->get();
+        $query = MaterialRequest::query()
+            ->with(['material', 'project', 'requester', 'approver']);
+
+        // Filter by status
+        if ($request->filled('status')) {
+            $query->where('status', $request->get('status'));
+        }
+
+        // Filter by date range
+        if ($request->filled('from_date')) {
+            $query->whereDate('created_at', '>=', $request->get('from_date'));
+        }
+        if ($request->filled('to_date')) {
+            $query->whereDate('created_at', '<=', $request->get('to_date'));
+        }
+
+        // Filter by project
+        if ($request->filled('project_id')) {
+            $query->where('project_id', $request->get('project_id'));
+        }
+
+        $requests = $query->latest()->get();
+
+        $projects = Project::query()->orderBy('project_name')->get();
 
         return view('hse-officer.material-requests.index', [
             'requests' => $requests,
+            'projects' => $projects,
+        ]);
+    }
+
+    public function show(Request $request, MaterialRequest $materialRequest): View
+    {
+        $materialRequest->load(['material', 'project', 'requester', 'approver']);
+
+        return view('hse-officer.material-requests.show', [
+            'request' => $materialRequest,
         ]);
     }
 
@@ -47,7 +75,6 @@ class HseOfficerMaterialRequestController extends Controller
         $project = $materialRequest->project;
         $material = $materialRequest->material;
 
-        // Check if material has enough quantity at head office
         if (! $material->hasAvailableQuantity($materialRequest->quantity)) {
             throw ValidationException::withMessages([
                 'quantity' => "Insufficient head office balance for {$material->material_name}. Available: {$material->quantity}.",
@@ -55,7 +82,6 @@ class HseOfficerMaterialRequestController extends Controller
         }
 
         DB::transaction(function () use ($materialRequest, $project, $material, $request): void {
-            // Deduct from head office
             $material->deductQuantity($materialRequest->quantity);
             $material->recordHistory(
                 'assigned_to_project',
@@ -64,7 +90,6 @@ class HseOfficerMaterialRequestController extends Controller
                 $request->user()->id,
             );
 
-            // Create a project assignment record
             MaterialProjectAssignment::create([
                 'material_id' => $material->id,
                 'project_id' => $project->id,
@@ -72,9 +97,6 @@ class HseOfficerMaterialRequestController extends Controller
                 'receiver_id' => $project->site_officer_id,
                 'assigned_by' => $request->user()->id,
             ]);
-
-            // If employee file was uploaded, we need to distribute to employees
-            // but for now we just mark it as approved - the site officer can distribute later
         });
 
         app(WorkflowNotificationService::class)->notifyUser(
@@ -83,7 +105,7 @@ class HseOfficerMaterialRequestController extends Controller
                 category: 'material_request_approved',
                 title: 'Material request approved',
                 message: "Your request for {$materialRequest->quantity} of {$material->material_name} on project {$project->project_code} has been approved by {$request->user()->name}.",
-                actionUrl: route('site-officer.material-requests.index'),
+                actionUrl: route('site-officer.material-requests.show', $materialRequest),
             ),
         );
 
@@ -119,7 +141,7 @@ class HseOfficerMaterialRequestController extends Controller
                 category: 'material_request_rejected',
                 title: 'Material request rejected',
                 message: "Your request for {$materialRequest->quantity} of {$material->material_name} on project {$project->project_code} was rejected by {$request->user()->name}. Reason: {$validated['rejection_reason']}",
-                actionUrl: route('site-officer.material-requests.index'),
+                actionUrl: route('site-officer.material-requests.show', $materialRequest),
             ),
         );
 

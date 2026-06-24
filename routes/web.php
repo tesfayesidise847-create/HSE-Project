@@ -92,6 +92,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::middleware('role:HSE Officer')->prefix('hse-officer')->name('hse-officer.')->group(function () {
         Route::get('material-requests', [HseOfficerMaterialRequestController::class, 'index'])->name('material-requests.index');
+        Route::get('material-requests/{materialRequest}', [HseOfficerMaterialRequestController::class, 'show'])->name('material-requests.show');
         Route::post('material-requests/{materialRequest}/approve', [HseOfficerMaterialRequestController::class, 'approve'])->name('material-requests.approve');
         Route::post('material-requests/{materialRequest}/reject', [HseOfficerMaterialRequestController::class, 'reject'])->name('material-requests.reject');
     });
