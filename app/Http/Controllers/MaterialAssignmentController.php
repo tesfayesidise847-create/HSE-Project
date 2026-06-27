@@ -15,6 +15,11 @@ use Illuminate\View\View;
 
 class MaterialAssignmentController extends Controller
 {
+    public function index(): RedirectResponse
+    {
+        return Redirect::route('material-reports.index');
+    }
+
     public function create(): View
     {
         return view('material-assignments.create', [

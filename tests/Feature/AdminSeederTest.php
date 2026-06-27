@@ -54,6 +54,29 @@ it('allows admin to manage users and roles', function () {
     expect(Role::where('name', 'Supervisor')->exists())->toBeTrue();
 });
 
+it('filters and searches users by role for admin', function () {
+    $this->seed(AdminSeeder::class);
+
+    $admin = User::where('email', 'admin@example.com')->first();
+    $hseUser = User::factory()->create([
+        'name' => 'Filtered HSE',
+        'email' => 'filtered-hse@example.com',
+    ]);
+    $employee = User::factory()->create([
+        'name' => 'Filtered Employee',
+        'email' => 'filtered-employee@example.com',
+    ]);
+
+    $hseUser->assignRole('HSE Officer');
+    $employee->assignRole('Employee');
+
+    $this->actingAs($admin)
+        ->get(route('users.index', ['search' => 'filtered', 'role' => 'HSE Officer']))
+        ->assertOk()
+        ->assertSee('Filtered HSE')
+        ->assertDontSee('Filtered Employee');
+});
+
 it('denies non admin users from managing users and roles', function () {
     $user = User::factory()->create();
     $user->assignRole('Employee');

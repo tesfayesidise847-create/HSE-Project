@@ -7,12 +7,12 @@
 
         <!-- Email -->
         <div class="space-y-1.5">
-            <label for="email" class="block text-xs font-semibold uppercase tracking-wider text-slate-400">
+            <label for="email" class="block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
                 {{ __('Email Address') }}
             </label>
             <div class="relative">
                 <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5">
-                    <svg class="h-4 w-4 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+                    <svg class="h-4 w-4 text-slate-400 dark:text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 0 1-2.25 2.25h-15a2.25 2.25 0 0 1-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25m19.5 0v.243a2.25 2.25 0 0 1-1.07 1.916l-7.5 4.615a2.25 2.25 0 0 1-2.36 0L3.32 8.91a2.25 2.25 0 0 1-1.07-1.916V6.75" />
                     </svg>
                 </div>
@@ -25,9 +25,9 @@
                     autofocus
                     autocomplete="username"
                     placeholder="you@eec.gov.et"
-                    class="block w-full rounded-xl border border-white/10 bg-white/5 pl-10 pr-4 py-3 text-sm text-white placeholder-slate-500
+                    class="block w-full rounded-xl border border-slate-200 bg-white py-3 pl-10 pr-4 text-sm text-slate-900 placeholder-slate-400 shadow-sm dark:border-white/10 dark:bg-white/5 dark:text-white dark:placeholder-slate-500
                            transition-all duration-150
-                           focus:border-cyan-500 focus:bg-white/8 focus:ring-2 focus:ring-cyan-500/30 focus:outline-none
+                           focus:border-cyan-500 focus:bg-white focus:ring-2 focus:ring-cyan-500/30 focus:outline-none dark:focus:bg-white/10
                            @error('email') border-rose-500/50 focus:border-rose-500 focus:ring-rose-500/30 @enderror"
                 >
             </div>
@@ -37,19 +37,19 @@
         <!-- Password -->
         <div class="space-y-1.5" x-data="{ showPassword: false }">
             <div class="flex items-center justify-between">
-                <label for="password" class="block text-xs font-semibold uppercase tracking-wider text-slate-400">
+                <label for="password" class="block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
                     {{ __('Password') }}
                 </label>
                 @if (Route::has('password.request'))
                     <a href="{{ route('password.request') }}"
-                       class="text-xs text-cyan-400 hover:text-cyan-300 transition-colors">
+                       class="text-xs text-cyan-700 transition-colors hover:text-cyan-600 dark:text-cyan-400 dark:hover:text-cyan-300">
                         {{ __('Forgot password?') }}
                     </a>
                 @endif
             </div>
             <div class="relative">
                 <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5">
-                    <svg class="h-4 w-4 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+                    <svg class="h-4 w-4 text-slate-400 dark:text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H6.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25Z" />
                     </svg>
                 </div>
@@ -60,15 +60,15 @@
                     required
                     autocomplete="current-password"
                     placeholder="••••••••"
-                    class="block w-full rounded-xl border border-white/10 bg-white/5 pl-10 pr-12 py-3 text-sm text-white placeholder-slate-500
+                    class="block w-full rounded-xl border border-slate-200 bg-white py-3 pl-10 pr-12 text-sm text-slate-900 placeholder-slate-400 shadow-sm dark:border-white/10 dark:bg-white/5 dark:text-white dark:placeholder-slate-500
                            transition-all duration-150
-                           focus:border-cyan-500 focus:bg-white/8 focus:ring-2 focus:ring-cyan-500/30 focus:outline-none
+                           focus:border-cyan-500 focus:bg-white focus:ring-2 focus:ring-cyan-500/30 focus:outline-none dark:focus:bg-white/10
                            @error('password') border-rose-500/50 focus:border-rose-500 focus:ring-rose-500/30 @enderror"
                 >
                 <button
                     type="button"
                     @click="showPassword = ! showPassword"
-                    class="absolute inset-y-0 right-0 flex items-center pr-3.5 text-slate-500 hover:text-slate-300 transition-colors"
+                    class="absolute inset-y-0 right-0 flex items-center pr-3.5 text-slate-400 transition-colors hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300"
                     tabindex="-1"
                 >
                     <svg x-show="! showPassword" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
@@ -88,9 +88,9 @@
                 id="remember_me"
                 type="checkbox"
                 name="remember"
-                class="h-4 w-4 rounded border-white/20 bg-white/5 text-cyan-500 shadow-sm focus:ring-cyan-500/30 focus:ring-offset-0"
+                class="h-4 w-4 rounded border-slate-300 bg-white text-cyan-600 shadow-sm focus:ring-cyan-500/30 focus:ring-offset-0 dark:border-white/20 dark:bg-white/5 dark:text-cyan-500"
             >
-            <label for="remember_me" class="ml-2.5 text-sm text-slate-400">
+            <label for="remember_me" class="ml-2.5 text-sm text-slate-600 dark:text-slate-400">
                 {{ __('Keep me signed in') }}
             </label>
         </div>
@@ -102,7 +102,7 @@
                 id="login-submit-btn"
                 class="group relative w-full overflow-hidden rounded-xl px-4 py-3 text-sm font-semibold text-white shadow-eec
                        shimmer-btn transition-all duration-300 hover:shadow-eec-lg hover:-translate-y-0.5 active:translate-y-0
-                       focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:ring-offset-2 focus:ring-offset-gray-900"
+                       focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:ring-offset-2 focus:ring-offset-white dark:focus:ring-offset-gray-900"
             >
                 <span class="relative flex items-center justify-center gap-2">
                     <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">

@@ -33,6 +33,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('employees/import/template', [EmployeeController::class, 'downloadTemplate'])->name('employees.import.template');
         Route::post('employees/import', [EmployeeController::class, 'importStore'])->name('employees.import.store');
         Route::resource('employees', EmployeeController::class)->except(['show']);
+        Route::get('users/import', [UserController::class, 'importForm'])->name('users.import');
+        Route::get('users/import/template', [UserController::class, 'downloadTemplate'])->name('users.import.template');
+        Route::post('users/import', [UserController::class, 'importStore'])->name('users.import.store');
     });
 
     Route::middleware('role:Admin|HSE Officer')->group(function () {
@@ -52,6 +55,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::put('materials/{material}', [MaterialController::class, 'update'])->name('materials.update');
         Route::delete('materials/{material}', [MaterialController::class, 'destroy'])->name('materials.destroy');
 
+        Route::get('material-assignments', [MaterialAssignmentController::class, 'index'])->name('material-assignments.index');
         Route::get('material-assignments/create', [MaterialAssignmentController::class, 'create'])->name('material-assignments.create');
         Route::post('material-assignments', [MaterialAssignmentController::class, 'store'])->name('material-assignments.store');
 

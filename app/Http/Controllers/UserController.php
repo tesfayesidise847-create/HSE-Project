@@ -3,19 +3,40 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
+use App\Services\UserSpreadsheetService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Redirect;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 use Spatie\Permission\Models\Role;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class UserController extends Controller
 {
-    public function index(): View
+    public function __construct(private UserSpreadsheetService $spreadsheetService) {}
+
+    public function index(Request $request): View
     {
+        $filters = $request->validate([
+            'search' => ['nullable', 'string', 'max:255'],
+            'role' => ['nullable', 'string', Rule::exists('roles', 'name')],
+        ]);
+
         return view('users.index', [
-            'users' => User::with('roles')->latest()->paginate(10),
+            'users' => User::with('roles')
+                ->when($filters['search'] ?? null, function ($query, string $search): void {
+                    $query->where(function ($query) use ($search): void {
+                        $query->where('name', 'like', "%{$search}%")
+                            ->orWhere('email', 'like', "%{$search}%");
+                    });
+                })
+                ->when($filters['role'] ?? null, fn ($query, string $role) => $query->role($role))
+                ->latest()
+                ->paginate(10)
+                ->withQueryString(),
+            'roles' => Role::orderBy('name')->pluck('name'),
+            'filters' => $filters,
         ]);
     }
 
@@ -84,5 +105,37 @@ class UserController extends Controller
         $user->delete();
 
         return Redirect::route('users.index')->with('success', 'User deleted successfully.');
+    }
+
+    public function importForm(): View
+    {
+        return view('users.import');
+    }
+
+    public function downloadTemplate(): StreamedResponse
+    {
+        return $this->spreadsheetService->downloadTemplate();
+    }
+
+    public function importStore(Request $request): RedirectResponse
+    {
+        $request->validate([
+            'file' => ['required', 'file', 'mimes:xls,xlsx', 'max:10240'],
+        ]);
+
+        $result = $this->spreadsheetService->import($request->file('file'));
+
+        if ($result['imported'] === 0 && $result['errors'] !== []) {
+            return Redirect::route('users.import')
+                ->with('error', implode(' ', $result['errors']));
+        }
+
+        $message = $result['imported'].' user(s) imported successfully.';
+
+        if ($result['errors'] !== []) {
+            $message .= ' Some rows were skipped: '.implode(' ', $result['errors']);
+        }
+
+        return Redirect::route('users.index')->with('success', $message);
     }
 }

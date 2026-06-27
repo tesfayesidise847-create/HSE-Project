@@ -16,10 +16,27 @@ class MaterialController extends Controller
 {
     public function __construct(private MaterialSpreadsheetService $spreadsheetService) {}
 
-    public function index(): View
+    public function index(Request $request): View
     {
+        $filters = $request->validate([
+            'search' => ['nullable', 'string', 'max:255'],
+            'unit_of_measure_id' => ['nullable', 'integer', 'exists:unit_of_measures,id'],
+        ]);
+
         return view('materials.index', [
-            'materials' => Material::with('unitOfMeasure')->latest()->paginate(10),
+            'materials' => Material::with('unitOfMeasure')
+                ->when($filters['search'] ?? null, function ($query, string $search): void {
+                    $query->where(function ($query) use ($search): void {
+                        $query->where('material_name', 'like', "%{$search}%")
+                            ->orWhere('material_description', 'like', "%{$search}%");
+                    });
+                })
+                ->when($filters['unit_of_measure_id'] ?? null, fn ($query, int $unitOfMeasureId) => $query->where('unit_of_measure_id', $unitOfMeasureId))
+                ->latest()
+                ->paginate(10)
+                ->withQueryString(),
+            'unitOfMeasures' => UnitOfMeasure::orderBy('name')->get(),
+            'filters' => $filters,
         ]);
     }
 

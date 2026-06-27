@@ -31,6 +31,7 @@
             }"
             class="min-h-screen"
         >
+            {{-- ===== HEADER (unchanged) ===== --}}
             <header class="sticky top-0 z-40 flex h-16 items-center justify-between border-b border-cyan-900/40 bg-[#0b1e2d] px-4 shadow-sm sm:px-6">
                 <div class="flex min-w-0 items-center gap-3">
                     <button
@@ -119,16 +120,26 @@
             </header>
 
             <div class="flex min-h-[calc(100vh-4rem)]">
+
+                {{-- ===== MOBILE OVERLAY BACKDROP ===== --}}
+                {{-- FIX: Added dark: prefix so it adapts to both themes --}}
                 <div
                     x-show="mobileOpen"
                     x-cloak
                     @click="mobileOpen = false"
-                    class="fixed inset-0 z-30 bg-gray-900/60 lg:hidden"
+                    class="fixed inset-0 z-30 bg-gray-900/50 backdrop-blur-sm dark:bg-gray-900/60 lg:hidden"
                     x-transition.opacity
                 ></div>
 
+                {{-- ===== SIDEBAR ===== --}}
+                {{-- FIX: bg-white in light mode, bg-[#0b1e2d] in dark mode --}}
+                {{-- FIX: border updated to be visible in both themes --}}
                 <aside
-                    class="fixed inset-y-0 left-0 top-16 z-30 flex flex-col border-r border-cyan-900/40 bg-[#0b1e2d] transition-all duration-300 lg:sticky lg:z-auto lg:translate-x-0"
+                    class="fixed inset-y-0 left-0 top-16 z-30 flex flex-col
+                           border-r border-gray-200 bg-white
+                           transition-all duration-300
+                           dark:border-cyan-900/40 dark:bg-[#0b1e2d]
+                           lg:sticky lg:z-auto lg:translate-x-0"
                     :class="{
                         'w-72 translate-x-0': mobileOpen,
                         '-translate-x-full': ! mobileOpen,
@@ -136,13 +147,22 @@
                         'lg:w-64': ! sidebarCollapsed
                     }"
                 >
+                    {{-- Gradient top bar — visible in both themes --}}
                     <div class="h-0.5 w-full bg-gradient-to-r from-cyan-500 via-teal-400 to-cyan-500"></div>
 
+                    {{-- Collapse / Close controls --}}
                     <div class="flex items-center justify-end px-3 pb-2 pt-4">
+                        {{-- Desktop collapse button --}}
+                        {{-- FIX: text-gray-400 in light, text-slate-400 in dark --}}
                         <button
                             type="button"
                             @click="toggleSidebar()"
-                            class="hidden h-8 w-8 items-center justify-center rounded-lg text-slate-400 transition hover:bg-white/10 hover:text-white focus:outline-none focus:ring-2 focus:ring-cyan-500/40 lg:inline-flex"
+                            class="hidden h-8 w-8 items-center justify-center rounded-lg
+                                   text-gray-400 transition
+                                   hover:bg-gray-100 hover:text-gray-700
+                                   focus:outline-none focus:ring-2 focus:ring-cyan-500/40
+                                   dark:text-slate-400 dark:hover:bg-white/10 dark:hover:text-white
+                                   lg:inline-flex"
                             :aria-label="sidebarCollapsed ? '{{ __('Expand sidebar') }}' : '{{ __('Collapse sidebar') }}'"
                         >
                             <svg class="h-4 w-4 transition-transform duration-300" :class="{ 'rotate-180': ! sidebarCollapsed }" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
@@ -150,10 +170,15 @@
                             </svg>
                         </button>
 
+                        {{-- Mobile close button --}}
                         <button
                             type="button"
                             @click="mobileOpen = false"
-                            class="inline-flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 transition hover:bg-white/10 hover:text-white lg:hidden"
+                            class="inline-flex h-8 w-8 items-center justify-center rounded-lg
+                                   text-gray-400 transition
+                                   hover:bg-gray-100 hover:text-gray-700
+                                   dark:text-slate-400 dark:hover:bg-white/10 dark:hover:text-white
+                                   lg:hidden"
                             aria-label="{{ __('Close menu') }}"
                         >
                             <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
@@ -162,10 +187,15 @@
                         </button>
                     </div>
 
+                    {{-- "Navigation" section label --}}
+                    {{-- FIX: readable in both light and dark --}}
                     <div x-show="! sidebarCollapsed" x-cloak class="px-4 pb-2">
-                        <p class="text-[10px] font-semibold uppercase text-cyan-600/70">Navigation</p>
+                        <p class="text-[10px] font-semibold uppercase tracking-wider text-gray-400 dark:text-cyan-600/70">
+                            Navigation
+                        </p>
                     </div>
 
+                    {{-- Nav links --}}
                     <div class="flex-1 overflow-y-auto px-3 pb-6">
                         <nav class="space-y-1.5">
                             <x-sidebar-link :href="route('dashboard')" :active="request()->routeIs('dashboard')"
@@ -271,14 +301,20 @@
                         </nav>
                     </div>
 
-                    <div x-show="! sidebarCollapsed" x-cloak class="shrink-0 border-t border-cyan-900/40 px-4 py-4">
+                    {{-- Sidebar footer: logged-in user --}}
+                    {{-- FIX: text colors readable in both light and dark --}}
+                    <div x-show="! sidebarCollapsed" x-cloak
+                         class="shrink-0 border-t border-gray-200 px-4 py-4 dark:border-cyan-900/40">
                         <div class="flex items-center gap-3">
                             <span class="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-cyan-500 to-teal-600 text-xs font-bold text-white">
                                 {{ strtoupper(substr(Auth::user()->name, 0, 1)) }}
                             </span>
                             <div class="min-w-0 flex-1">
-                                <p class="truncate text-xs font-semibold text-slate-200">{{ Auth::user()->name }}</p>
-                                <p class="truncate text-[10px] text-slate-500">
+                                {{-- FIX: dark text in light mode, light text in dark mode --}}
+                                <p class="truncate text-xs font-semibold text-gray-800 dark:text-slate-200">
+                                    {{ Auth::user()->name }}
+                                </p>
+                                <p class="truncate text-[10px] text-gray-400 dark:text-slate-500">
                                     {{ Auth::user()->roles->first()?->name ?? __('No role') }}
                                 </p>
                             </div>
@@ -286,6 +322,7 @@
                     </div>
                 </aside>
 
+                {{-- ===== MAIN CONTENT AREA (unchanged) ===== --}}
                 <div class="flex min-w-0 flex-1 flex-col">
                     @isset($header)
                         <div class="border-b border-gray-200 bg-white px-6 py-4 dark:border-gray-800 dark:bg-gray-900/50">

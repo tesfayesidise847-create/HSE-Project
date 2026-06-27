@@ -111,6 +111,14 @@ it('denies non hse officers from assigning materials', function () {
         ->assertForbidden();
 });
 
+it('routes the material assignment index to material reports', function () {
+    $officer = createHseOfficer();
+
+    $this->actingAs($officer)
+        ->get(route('material-assignments.index'))
+        ->assertRedirect(route('material-reports.index'));
+});
+
 it('shows unit of measure options when hse officer creates a material', function () {
     $officer = createHseOfficer();
 

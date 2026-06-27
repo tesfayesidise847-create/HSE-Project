@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\Material;
+use App\Models\UnitOfMeasure;
 use App\Models\User;
 use App\Services\MaterialSpreadsheetService;
 use Database\Seeders\RoleSeeder;
@@ -49,6 +50,33 @@ it('imports materials from xls file', function () {
     expect(Material::where('material_name', 'Gravel')->exists())->toBeTrue();
 
     @unlink($path);
+});
+
+it('filters and searches materials', function () {
+    $user = User::factory()->create();
+    $user->assignRole('HSE Officer');
+    $bag = UnitOfMeasure::where('name', 'Bag')->firstOrFail();
+    $pcs = UnitOfMeasure::where('name', 'Pcs')->firstOrFail();
+
+    Material::create([
+        'material_name' => 'Safety Helmet',
+        'material_description' => 'Head protection',
+        'quantity' => 15,
+        'unit_of_measure_id' => $pcs->id,
+    ]);
+
+    Material::create([
+        'material_name' => 'Cement',
+        'material_description' => 'Construction bag',
+        'quantity' => 50,
+        'unit_of_measure_id' => $bag->id,
+    ]);
+
+    $this->actingAs($user)
+        ->get(route('materials.index', ['search' => 'helmet', 'unit_of_measure_id' => $pcs->id]))
+        ->assertOk()
+        ->assertSee('Safety Helmet')
+        ->assertDontSee('Cement');
 });
 
 it('denies non hse officer from importing materials', function () {
